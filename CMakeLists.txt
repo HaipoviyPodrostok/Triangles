@@ -3,7 +3,7 @@ enable_testing()
 cmake_minimum_required(VERSION 3.11)
 project("triangles")
 
-#   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
 
 SET(SRCS 
     main.cpp
@@ -27,5 +27,5 @@ foreach(file ${testfiles})
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 
-    set_tests_properties(${testname} PROPERTIES DEPENDS two_q_cache.x)
+    set_tests_properties(${testname} PROPERTIES DEPENDS triangles.x)
 endforeach()
