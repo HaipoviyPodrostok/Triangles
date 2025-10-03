@@ -6,27 +6,29 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
 
+#include "math_utils.hpp"
+
 constexpr float flt_tolerance    = 1e-6f;
 constexpr float inner_area_width = 100.0;
 
 enum Area { LEFT_SIDE, INNER_SIDE, RIGHT_SIDE };
 
-struct Point {   // TODO maybe via vector
-    float x = NAN;
-    float y = NAN;
-    float z = NAN;
+// struct Point {   // TODO maybe via vector
+//     float x = NAN;
+//     float y = NAN;
+//     float z = NAN;
 
-    void print() const { std::cout << "(" << x << "; " << y << "; " << z << ")"; }
+//     void print() const { std::cout << "(" << x << "; " << y << "; " << z << ")"; }
     
-    bool valid() const { return !(x != x || y != y || z != z); }
+//     bool valid() const { return !(x != x || y != y || z != z); }
     
-    bool is_equal(const Point& rhs) const {
-        assert(valid() && rhs.valid());
-        return (std::abs(x - rhs.x) < flt_tolerance) &&
-               (std::abs(y - rhs.y) < flt_tolerance) &&
-               (std::abs(z - rhs.y) < flt_tolerance); 
-    }
-};
+//     bool is_equal(const Point& rhs) const {
+//         assert(valid() && rhs.valid());
+//         return (math::is_equal(x, rhs.x)) &&
+//                (math::is_equal(y, rhs.y)) &&
+//                (math::is_equal(z, rhs.z)); 
+//     }
+// };
 
 struct Vector3D {
     float x = NAN;
@@ -50,6 +52,10 @@ struct Vector3D {
         return (std::sqrtf(x * x + y * y + z * z));
     }
     
+    float scalar(const Vector3D& other) const {
+        return (x * other.x + y * other.y + z * other.z);
+    }
+
     Vector3D cross(const Vector3D other) const {
         if (other.length() < flt_tolerance ||
                   length() < flt_tolerance) {
@@ -91,20 +97,71 @@ struct Line {
         return false;
     }
 };
-    // bool is_intersect(const Line& first, const Line& second) {
 
+// -- plane -- ((r, n) + D = 0) 
+class Plane {
+public:
+    Plane(const Vector3D& point, const Vector3D& n)
+    : r_(point), normal_(n) {
+        
+        D_ = -((n.x * point.x) + (n.y * point.y) + (n.z * point.z));
+    }
+    
+    bool match(const Plane& other) const {
+        float scalar = r_.scalar(normal_);
+        
+        return (normal_.collinear(other.normal_) &&
+                math::is_equal(scalar, 0.0f)); 
+    }
+
+    bool parallel(const Plane& other) const {
+        float scalar = r_.scalar(normal_);
+        
+        return (normal_.collinear(other.normal_) &&
+                !math::is_equal(scalar, 0.0f)); 
+    }
+    
+// TODO is_valid (if normal is too short)
+private:
+    Vector3D r_;
+    Vector3D normal_;
+    float D_;
+};
+    
+class Triangle {
+public:
+    Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c)
+        : a_(a), b_(b), c_(c) {}  // TODO add in a constructor
+
+    Plane find_plane() const {
+        Vector3D ab = {b_.x - a_.x, b_.y - a_.y, b_.z - a_.z};
+        Vector3D ac = {c_.x - a_.x, c_.y - a_.y, c_.z - a_.z};
+
+        Vector3D normal = ab.cross(ac);
+
+        return Plane{a_, normal};
+    }
+    
+private:
+    Vector3D a_;
+    Vector3D b_;
+    Vector3D c_;
+};
+    
+    // bool is_intersect(const Line& first, const Line& second) {
+    
     // }
         
     // Line(const Vector3D& point, const Vector3D& normal)
     //     : 
-
-
-
-
+    
+    
+    
+    
     // float a = -1.0f;
     // float b = -1.0f;
     // float c =  0.0f;
-
+    
     // void print() const { std::cout << a << "x + " << b << "y + " << c << " = 0"; }
     
     // line_t(const point_t &p1, const point_t &p2) {
@@ -122,14 +179,14 @@ struct Line {
     //     if (side_offset > 0.0 + float_tolerance * inner_area_width) {
     //         return LEFT_SIDE;
     //     }
-
+    
     //     if (side_offset > 0.0 - float_tolerance * inner_area_width) {
     //         return INNER_SIDE;
     //     }
-
+    
     //     return RIGHT_SIDE;
     // }
-
+    
     // bool separates(const point_t &point1, const point_t &point2) const {
     //     area_t side1 = get_side_area(point1);
     //     area_t side2 = get_side_area(point2);
@@ -138,30 +195,5 @@ struct Line {
     //     }
     //     return !(side1 == side2);
     // }
-
+    
     // bool valid() const { return !(a != a || b != b || c != c); }
-
-
-
-// -- plane -- ((r, n) + D = 0) 
-struct Plane {
-    Vector3D normal;
-    float D;
-
-    Plane(const Vector3D& point, const Vector3D& n)
-        : normal(n) {
-            
-        D = -((n.x * point.x) + (n.y * point.y) + (n.z * point.z));
-    }
-
-    bool parallel(const Plane& other) {
-        
-        if (normal.collinear(other.normal)) {
-            return true;
-        }
-    }
-
-    bool match(const Plane& other) {
-
-    }
-};
