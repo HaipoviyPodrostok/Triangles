@@ -1,0 +1,79 @@
+#include <cassert>
+#include <cmath>
+
+#include "geometry/line.hpp"
+#include "geometry/vector_3d.hpp"
+#include "math/math_utils.hpp"
+
+namespace geometry {
+
+Line::Line(const Vector3D& origin, const Vector3D& dir)
+    : origin_(origin), dir_(dir) {
+    
+    if (dir.is_zero()) {
+        throw std::invalid_argument("Direction vector can not be (0, 0, 0)");
+    } //TODO throw to where?
+}
+
+Vector3D Line::origin() const { return origin_; }
+Vector3D Line::dir()    const { return dir_; }
+
+bool Line::is_parallel(const Line& other) const {        
+    return (dir_.is_collinear(other.dir_));
+}
+
+bool Line::is_contains(const Vector3D& point) const {
+    return ((point - origin_).is_collinear(dir_));
+}
+
+bool Line::is_intersect(const Line& other) const {
+    assert(is_valid());
+    assert(other.is_valid());
+
+    if (is_parallel(other)) {
+        return false;
+    }
+
+    const Vector3D& p1 = origin_;
+    const Vector3D& d1 = dir_;
+    const Vector3D& p2 = other.origin_;
+    const Vector3D& d2 = dir_;
+
+    const Vector3D& v = p2 - p1;
+    const Vector3D& n = d1.cross(d2);
+
+    if (math::is_zero(v.scalar(n))) {
+        return true;
+    }
+
+    return false;
+}
+
+// -- line this:  p1 + t * d1 --
+// -- line other: p2 + s * d2 --
+Vector3D Line::intersect_point(const Line& other) const {
+    assert(is_valid());
+    assert((other.is_valid()));
+    assert(is_intersect(other));
+
+    const Vector3D& p1 = origin_;
+    const Vector3D& d1 = dir_;
+    const Vector3D& p2 = other.origin_;
+    const Vector3D& d2 = dir_;
+
+    const Vector3D& n = d1.cross(d2);
+    const float n_len_squared = n.length() * n.length();
+
+    const float t = ( (p2 - p1).cross(d2) ).scalar(n) / n_len_squared;
+    const float s = ( (p2 - p1).cross(d1) ).scalar(n) / n_len_squared;
+
+    const Vector3D& a = p1 + d1 * t;
+    const Vector3D& b = p2 + d2 * s;
+    
+    if (math::is_zero( (a - b).length() )) {
+        return a;
+    }
+
+    return Vector3D{NAN, NAN, NAN}; //NOTE or nullopt
+}
+}// namespace geometry
