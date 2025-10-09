@@ -1,5 +1,6 @@
 #include "geometry/vector_3d.hpp"
 #include "math/math_utils.hpp"
+#include <cassert>
 
 namespace geometry {
 
@@ -18,6 +19,10 @@ Vector3D Vector3D::operator- (const Vector3D& other) const {
     return Vector3D{x_ - other.x_, y_ - other.y_, z_ - other.z_};
 }
 
+Vector3D Vector3D::operator* (const float& scalar) const {
+    return Vector3D{x_ * scalar, y_ * scalar, z_ * scalar};
+}
+ 
 bool Vector3D::is_valid() const {
     return std::isfinite(x_) && std::isfinite(y_) && std::isfinite(z_);
 }
@@ -51,4 +56,7 @@ Vector3D Vector3D::cross(const Vector3D& other) const {
     return Vector3D{i, j, k};
 }
 
+void Vector3D::print() const {
+    std::cout << "(" << x_ << ", " << y_ << ", " << z_ << ")";
+}
 } // namespace geometry

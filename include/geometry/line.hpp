@@ -1,6 +1,6 @@
 #pragma once
 
-#include "geometry/vector_3d.hpp"
+#include "vector_3d.hpp"
 
 namespace geometry {
 
@@ -18,7 +18,8 @@ public:
     bool is_contains(const Vector3D& point) const;
 
     Vector3D intersect_point(const Line& other) const;
-    
+    void print() const;
+
 private:
     Vector3D origin_;
     Vector3D dir_;

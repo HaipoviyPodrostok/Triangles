@@ -4,9 +4,9 @@
 #include <math.h>
 #include <gtest/gtest.h>
 
-#include "geometry/vector_3d.hpp"
-#include "geometry/section.hpp"
-#include "geometry/plane.hpp"
+#include "vector_3d.hpp"
+#include "section.hpp"
+#include "plane.hpp"
 
 namespace geometry {
 
@@ -14,9 +14,10 @@ class Triangle {
 public:
     Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c);
     bool is_valid() const;
+    void print() const;
     bool intersection(const Triangle& other) const;
-
-    Triangle change_basis(const Plane& plane) const;
+    bool is_inside(const Triangle& other) const;
+    bool is_intersect_2d(const Triangle& other) const;
 
 private:
     Vector3D a_;
@@ -26,9 +27,11 @@ private:
     Section ab_;
     Section bc_;
     Section ac_;
+
+    Vector3D normal_;
     
     Plane find_plane() const;
-    bool is_intersect_2d(const Triangle& other) const;
+    Side get_side(const Vector3D& ) const;
 };
 } // namespace geometry
 

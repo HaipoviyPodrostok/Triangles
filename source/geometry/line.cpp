@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cmath>
+#include <iostream>
 
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
@@ -17,6 +18,10 @@ Line::Line(const Vector3D& origin, const Vector3D& dir)
 
 Vector3D Line::origin() const { return origin_; }
 Vector3D Line::dir()    const { return dir_; }
+
+bool Line::is_valid() const {
+    return origin_.is_valid() && dir_.is_valid() && !(dir_.is_zero());
+}
 
 bool Line::is_parallel(const Line& other) const {        
     return (dir_.is_collinear(other.dir_));
@@ -37,7 +42,7 @@ bool Line::is_intersect(const Line& other) const {
     const Vector3D& p1 = origin_;
     const Vector3D& d1 = dir_;
     const Vector3D& p2 = other.origin_;
-    const Vector3D& d2 = dir_;
+    const Vector3D& d2 = other.dir_;
 
     const Vector3D& v = p2 - p1;
     const Vector3D& n = d1.cross(d2);
@@ -59,7 +64,7 @@ Vector3D Line::intersect_point(const Line& other) const {
     const Vector3D& p1 = origin_;
     const Vector3D& d1 = dir_;
     const Vector3D& p2 = other.origin_;
-    const Vector3D& d2 = dir_;
+    const Vector3D& d2 = other.dir_;
 
     const Vector3D& n = d1.cross(d2);
     const float n_len_squared = n.length() * n.length();
@@ -75,5 +80,10 @@ Vector3D Line::intersect_point(const Line& other) const {
     }
 
     return Vector3D{NAN, NAN, NAN}; //NOTE or nullopt
+}
+
+void Line::print() const {
+    std::cout << "origin = "; origin_.print();
+    std::cout << ", dir = ";  dir_.print();
 }
 }// namespace geometry

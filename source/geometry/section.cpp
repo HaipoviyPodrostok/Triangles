@@ -1,6 +1,8 @@
 #include "geometry/section.hpp"
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
+#include "math/math_utils.hpp"
+#include <cassert>
 
 namespace geometry {
 
@@ -17,11 +19,22 @@ Line Section::get_line() const {
     return Line{a_, b_ - a_};
 }
 
-// bool Section::is_intersect(const Section& other) const {
-//     Line first_line  = get_line();
-//     Line second_line = other.get_line();
+bool Section::is_intersect(const Section& other) const {  // TODO failed test
+    assert(this->is_valid());
+    assert(other.is_valid());
+    
+    Line first_line  = get_line();
+    Line second_line = other.get_line();
 
-// }
+    if (first_line.is_intersect(second_line)) {
+        Vector3D p = first_line.intersect_point(second_line);
+        if ( this->is_contains(p) && other.is_contains(p) ) {
+            return true;
+        }
+    }
+    
+    return false;
+}
 
 float Section::length() const {
     return (a_ - b_).length();
@@ -39,5 +52,25 @@ Side Section::get_side(const Vector3D& p) const {
 
     return INTER_SIDE;
 }
-} // namespace geometry 
 
+bool Section::is_contains(const Vector3D& p) const { // TODO failed test
+    Vector3D ap = p - a_;
+    Vector3D ab = b_ - a_;
+    Vector3D bp = p - b_;
+
+    if ((ap).is_collinear(ab)) {
+        float scalar_ab_bp = ap.scalar(bp);
+        if (scalar_ab_bp < 0 || math::is_zero(scalar_ab_bp)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void Section::print() const {
+    std::cout << "p1 = ";   a_.print();
+    std::cout << ", p2 = "; b_.print();
+    std::cout << std::endl;
+}
+} // namespace geometry 
