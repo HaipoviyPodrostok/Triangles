@@ -16,7 +16,7 @@ public:
     bool is_valid() const;
     void print() const;
     bool intersection(const Triangle& other) const;
-    bool is_inside(const Triangle& other) const;
+    bool is_inside(const Vector3D& p) const;
     bool is_intersect_2d(const Triangle& other) const;
 
 private:

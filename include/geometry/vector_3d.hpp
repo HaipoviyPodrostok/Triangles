@@ -18,6 +18,7 @@ public:
     bool is_valid() const;
     bool is_zero()  const;
     bool is_collinear(const Vector3D& other) const;
+    bool is_codirected(const Vector3D& other) const;
 
     float length() const;
     float scalar(const Vector3D& other) const;
@@ -27,7 +28,7 @@ public:
     Vector3D operator* (const float& scalar) const;
 
     Vector3D cross(const Vector3D& other) const;
-
+    
     void print() const;
 
 private:

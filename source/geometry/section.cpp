@@ -19,20 +19,62 @@ Line Section::get_line() const {
     return Line{a_, b_ - a_};
 }
 
-bool Section::is_intersect(const Section& other) const {  // TODO failed test
-    assert(this->is_valid());
+bool Section::is_intersect(const Section& other) const {
+    assert(is_valid());
     assert(other.is_valid());
-    
+
     Line first_line  = get_line();
     Line second_line = other.get_line();
 
+    // 1️⃣ Если линии не параллельны — обычное 3D пересечение
     if (first_line.is_intersect(second_line)) {
         Vector3D p = first_line.intersect_point(second_line);
-        if ( this->is_contains(p) && other.is_contains(p) ) {
+        if (is_contains(p) && other.is_contains(p))
             return true;
-        }
+        return false;
     }
-    
+
+    // 2️⃣ Если линии параллельны — проверяем коллинеарность
+    if (first_line.is_parallel(second_line)) {
+        // Если не лежат на одной прямой — нет пересечения
+        if (!first_line.is_contains(other.a_))
+            return false;
+
+        // Коллинеарные: проверяем перекрытие проекций на главную ось
+        Vector3D dir = first_line.dir();
+        float ax = std::fabs(dir.x());
+        float ay = std::fabs(dir.y());
+        float az = std::fabs(dir.z());
+
+        int axis = 0;
+        if (ay > ax && ay > az) axis = 1;
+        else if (az > ax && az > ay) axis = 2;
+
+        float a1, a2, b1, b2;
+
+        switch (axis) {
+            case 0: // X
+                a1 = a_.x(); a2 = b_.x();
+                b1 = other.a_.x(); b2 = other.b_.x();
+                break;
+            case 1: // Y
+                a1 = a_.y(); a2 = b_.y();
+                b1 = other.a_.y(); b2 = other.b_.y();
+                break;
+            default: // Z
+                a1 = a_.z(); a2 = b_.z();
+                b1 = other.a_.z(); b2 = other.b_.z();
+                break;
+        }
+
+        if (a1 > a2) std::swap(a1, a2);
+        if (b1 > b2) std::swap(b1, b2);
+
+        // Перекрываются ли проекции (учитываем допуск)
+        return !(a2 < b1 - flt_tolerance || b2 < a1 - flt_tolerance);
+    }
+
+    // 3️⃣ В остальных случаях (разные плоскости) — нет пересечения
     return false;
 }
 

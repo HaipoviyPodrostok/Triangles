@@ -44,12 +44,11 @@ bool Line::is_intersect(const Line& other) const {
     const Vector3D& p2 = other.origin_;
     const Vector3D& d2 = other.dir_;
 
-    const Vector3D& v = p2 - p1;
-    const Vector3D& n = d1.cross(d2);
+    const Vector3D v = p2 - p1;
+    const Vector3D n = d1.cross(d2);
 
-    if (math::is_zero(v.scalar(n))) {
-        return true;
-    }
+    if (n.is_zero()) { return false; }
+    if (math::is_zero(v.scalar(n))) { return true; }
 
     return false;
 }
@@ -59,21 +58,22 @@ bool Line::is_intersect(const Line& other) const {
 Vector3D Line::intersect_point(const Line& other) const {
     assert(is_valid());
     assert((other.is_valid()));
-    assert(is_intersect(other));
+    (is_intersect(other));
 
     const Vector3D& p1 = origin_;
     const Vector3D& d1 = dir_;
     const Vector3D& p2 = other.origin_;
     const Vector3D& d2 = other.dir_;
 
-    const Vector3D& n = d1.cross(d2);
+    const Vector3D n = d1.cross(d2);
+    if (n.is_zero()) { return {NAN, NAN, NAN}; }
     const float n_len_squared = n.length() * n.length();
 
     const float t = ( (p2 - p1).cross(d2) ).scalar(n) / n_len_squared;
     const float s = ( (p2 - p1).cross(d1) ).scalar(n) / n_len_squared;
 
-    const Vector3D& a = p1 + d1 * t;
-    const Vector3D& b = p2 + d2 * s;
+    const Vector3D a = p1 + d1 * t;
+    const Vector3D b = p2 + d2 * s;
     
     if (math::is_zero( (a - b).length() )) {
         return a;

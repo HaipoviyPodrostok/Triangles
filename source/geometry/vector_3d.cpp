@@ -28,11 +28,15 @@ bool Vector3D::is_valid() const {
 }
 
 bool Vector3D::is_collinear(const Vector3D& other) const {
-    Vector3D cross_res = this->cross(other);
-    return (cross_res.is_zero());        
+    return ( (this->cross(other) ).is_zero() );
 }
+
+bool Vector3D::is_codirected(const Vector3D& other) const {
+    return  (is_collinear(other) && this->scalar(other) >= 0.0f);
+}
+
 bool Vector3D::is_zero() const {
-    return (length() < flt_tolerance) ;
+    return (math::is_zero(length())) ;
 }
 
 float Vector3D::length() const {
@@ -43,12 +47,7 @@ float Vector3D::scalar(const Vector3D& other) const {
     return (x_ * other.x_ + y_ * other.y_ + z_ * other.z_);
 }
 
-Vector3D Vector3D::cross(const Vector3D& other) const {
-    if (other.is_zero() ||
-        this->is_zero()) {
-        throw std::invalid_argument("Crossing of zero vectors");
-    }
-    
+Vector3D Vector3D::cross(const Vector3D& other) const {    
     float i = (y_ * other.z_) - (z_ * other.y_);
     float j = (z_ * other.x_) - (x_ * other.z_);
     float k = (x_ * other.y_) - (y_ * other.x_);

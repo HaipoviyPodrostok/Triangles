@@ -1,113 +1,194 @@
 #include <gtest/gtest.h>
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
-#include <cmath>
 
 using namespace geometry;
 
-constexpr float EPS = 1e-6f;
-
-// === Конструктор и поля ===
-TEST(LineTest, ConstructorAndAccessors) {
-    Vector3D origin(1, 2, 3);
-    Vector3D dir(1, 0, 0);
-
-    Line l(origin, dir);
-
-    EXPECT_FLOAT_EQ(l.origin().x(), 1);
-    EXPECT_FLOAT_EQ(l.origin().y(), 2);
-    EXPECT_FLOAT_EQ(l.origin().z(), 3);
-
-    EXPECT_FLOAT_EQ(l.dir().x(), 1);
-    EXPECT_FLOAT_EQ(l.dir().y(), 0);
-    EXPECT_FLOAT_EQ(l.dir().z(), 0);
+TEST(LineTest, ConstructorThrowsOnZeroDirection) {
+    EXPECT_THROW(Line(Vector3D(0, 0, 0), Vector3D(0, 0, 0)), std::invalid_argument);
 }
 
-// === Проверка выбрасывания исключения при нулевом направлении ===
-TEST(LineTest, ConstructorThrowsOnZeroDir) {
-    Vector3D origin(0, 0, 0);
-    Vector3D zero(0, 0, 0);
-    EXPECT_THROW(Line l(origin, zero), std::invalid_argument);
+TEST(LineTest, ValidLineCheck) {
+    Line line(Vector3D(1, 2, 3), Vector3D(1, 0, 0));
+    EXPECT_TRUE(line.is_valid());
 }
 
-// === Проверка is_valid ===
-TEST(LineTest, IsValid) {
-    Line l(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
-    EXPECT_TRUE(l.is_valid());
+TEST(LineTest, InvalidLineWithZeroDirection) {
+    // Валидная линия — не должна выбросить исключение
+    EXPECT_NO_THROW(Line(Vector3D(0, 0, 0), Vector3D(0, 0, 1)));
 
-    // Некорректный случай
-    Vector3D nan(NAN, 0, 0);
-    Line invalid(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
-    EXPECT_TRUE(invalid.is_valid()); // оба валидны
-
-    // Проверим вручную невалидный (с помощью NAN)
-    Line invalid2(Vector3D(NAN, 0, 0), Vector3D(1, 0, 0));
-    EXPECT_FALSE(invalid2.is_valid());
+    // Невалидная линия — должна выбросить std::invalid_argument
+    EXPECT_THROW(Line(Vector3D(0, 0, 0), Vector3D(0, 0, 0)), std::invalid_argument);
 }
 
-// === Проверка параллельности ===
-TEST(LineTest, IsParallel) {
-    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
-    Line l2(Vector3D(0, 1, 0), Vector3D(2, 0, 0)); // параллельны
-    Line l3(Vector3D(0, 0, 0), Vector3D(0, 1, 0)); // не параллельны
-
+TEST(LineTest, ParallelLines) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 1, 1));
+    Line l2(Vector3D(1, 2, 3), Vector3D(2, 2, 2));
     EXPECT_TRUE(l1.is_parallel(l2));
-    EXPECT_FALSE(l1.is_parallel(l3));
 }
 
-// === Проверка принадлежности точки прямой ===
-TEST(LineTest, IsContains) {
-    Line l(Vector3D(0, 0, 0), Vector3D(1, 1, 1));
-
-    EXPECT_TRUE(l.is_contains(Vector3D(2, 2, 2)));  // на линии
-    EXPECT_TRUE(l.is_contains(Vector3D(-1, -1, -1))); // продолжение
-    EXPECT_FALSE(l.is_contains(Vector3D(1, 2, 3))); // не на линии
-}
-
-// === Проверка пересечения прямых ===
-TEST(LineTest, IsIntersect) {
+TEST(LineTest, NotParallelLines) {
     Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
     Line l2(Vector3D(0, 0, 0), Vector3D(0, 1, 0));
-
-    EXPECT_TRUE(l1.is_intersect(l2)); // пересекаются в начале координат
-
-    Line l3(Vector3D(0, 1, 0), Vector3D(1, 0, 0));
-    EXPECT_FALSE(l1.is_intersect(l3)); // параллельны и не пересекаются
-
-    Line l4(Vector3D(0, 1, 0), Vector3D(0, 0, 1));
-    EXPECT_FALSE(l1.is_intersect(l4)); // скрещивающиеся
+    EXPECT_FALSE(l1.is_parallel(l2));
 }
 
-// === Проверка intersect_point ===
-TEST(LineTest, IntersectPoint) {
-    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0)); // ось X
-    Line l2(Vector3D(0, 0, 0), Vector3D(0, 1, 0)); // ось Y
-
-    EXPECT_TRUE(l1.is_intersect(l2));
-
-    Vector3D p = l1.intersect_point(l2);
-    EXPECT_NEAR(p.x(), 0.0f, EPS);
-    EXPECT_NEAR(p.y(), 0.0f, EPS);
-    EXPECT_NEAR(p.z(), 0.0f, EPS);
+TEST(LineTest, ContainsPoint) {
+    Line l(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    EXPECT_TRUE(l.is_contains(Vector3D(5, 0, 0)));
+    EXPECT_FALSE(l.is_contains(Vector3D(0, 1, 0)));
 }
 
-// === Проверка intersect_point для непересекающихся линий ===
-TEST(LineTest, IntersectPointNoIntersection) {
+TEST(LineTest, IntersectSkewLines) {
     Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
-    Line l2(Vector3D(0, 1, 0), Vector3D(0, 0, 1));
-
+    Line l2(Vector3D(0, 1, 1), Vector3D(0, 1, -1));
     EXPECT_FALSE(l1.is_intersect(l2));
 }
 
-// === Проверка точек пересечения при пересекающихся наклонных прямых ===
-TEST(LineTest, IntersectPointDiagonal) {
+TEST(LineTest, IntersectCrossingLines) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Line l2(Vector3D(0, 0, 0), Vector3D(0, 1, 0));
+    EXPECT_TRUE(l1.is_intersect(l2));
+}
+
+TEST(LineTest, IntersectPointCorrectness) {
     Line l1(Vector3D(0, 0, 0), Vector3D(1, 1, 0));
     Line l2(Vector3D(1, 0, 0), Vector3D(-1, 1, 0));
-
-    EXPECT_TRUE(l1.is_intersect(l2));
-
     Vector3D p = l1.intersect_point(l2);
-    EXPECT_NEAR(p.x(), 0.5f, EPS);
-    EXPECT_NEAR(p.y(), 0.5f, EPS);
-    EXPECT_NEAR(p.z(), 0.0f, EPS);
+    EXPECT_NEAR(p.x(), 0.5, 1e-6);
+    EXPECT_NEAR(p.y(), 0.5, 1e-6);
+    EXPECT_NEAR(p.z(), 0.0, 1e-6);
+}
+
+TEST(LineTest, NonIntersectingLinesReturnNanPoint) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Line l2(Vector3D(0, 1, 0), Vector3D(0, 0, 1));
+    Vector3D p = l1.intersect_point(l2);
+    EXPECT_TRUE(std::isnan(p.x()));
+    EXPECT_TRUE(std::isnan(p.y()));
+    EXPECT_TRUE(std::isnan(p.z()));
+}
+
+// =============== CONSTRUCTOR TESTS ===============
+TEST(LineTest, ThrowsOnZeroDirection) {
+    EXPECT_THROW(Line(Vector3D(0, 0, 0), Vector3D(0, 0, 0)), std::invalid_argument);
+}
+
+TEST(LineTest, AcceptsValidDirection) {
+    EXPECT_NO_THROW(Line(Vector3D(0, 0, 0), Vector3D(1, 2, 3)));
+}
+
+TEST(LineTest, OriginAndDirectionAreStoredCorrectly) {
+    Vector3D origin(1, 2, 3);
+    Vector3D dir(4, 5, 6);
+    Line l(origin, dir);
+    EXPECT_NEAR(l.origin().x(), origin.x(), 1e-6);
+    EXPECT_NEAR(l.origin().y(), origin.y(), 1e-6);
+    EXPECT_NEAR(l.origin().z(), origin.z(), 1e-6);
+    EXPECT_NEAR(l.dir().x(), dir.x(), 1e-6);
+    EXPECT_NEAR(l.dir().y(), dir.y(), 1e-6);
+    EXPECT_NEAR(l.dir().z(), dir.z(), 1e-6);
+}
+
+// =============== VALIDITY TESTS ===============
+TEST(LineTest, ValidityWorksCorrectly) {
+    // Валидная линия
+    EXPECT_NO_THROW(Line(Vector3D(0, 0, 0), Vector3D(1, 0, 0)));
+
+    // Невалидная линия — должен быть выброс исключения
+    EXPECT_THROW(Line(Vector3D(0, 0, 0), Vector3D(0, 0, 0)), std::invalid_argument);
+}
+
+// =============== PARALLELISM TESTS ===============
+TEST(LineTest, DetectsParallelLines) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 2, 3));
+    Line l2(Vector3D(1, 1, 1), Vector3D(2, 4, 6));
+    EXPECT_TRUE(l1.is_parallel(l2));
+}
+
+TEST(LineTest, DetectsNonParallelLines) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Line l2(Vector3D(0, 0, 0), Vector3D(0, 1, 0));
+    EXPECT_FALSE(l1.is_parallel(l2));
+}
+
+// =============== CONTAINMENT TESTS ===============
+TEST(LineTest, ContainsPointOnLine) {
+    Line l(Vector3D(1, 2, 3), Vector3D(1, 0, 0));
+    EXPECT_TRUE(l.is_contains(Vector3D(5, 2, 3)));
+    EXPECT_TRUE(l.is_contains(Vector3D(-2, 2, 3)));
+}
+
+TEST(LineTest, DoesNotContainPointOffLine) {
+    Line l(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    EXPECT_FALSE(l.is_contains(Vector3D(1, 1, 0)));
+}
+
+// =============== INTERSECTION TESTS ===============
+TEST(LineTest, IntersectParallelLinesReturnFalse) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Line l2(Vector3D(0, 1, 0), Vector3D(1, 0, 0));
+    EXPECT_FALSE(l1.is_intersect(l2));
+}
+
+TEST(LineTest, IntersectCrossingLinesReturnTrue) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Line l2(Vector3D(0, 0, 0), Vector3D(0, 1, 0));
+    EXPECT_TRUE(l1.is_intersect(l2));
+}
+
+TEST(LineTest, IntersectSkewLinesReturnFalse) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Line l2(Vector3D(0, 1, 1), Vector3D(0, 1, -1));
+    EXPECT_FALSE(l1.is_intersect(l2));
+}
+
+// =============== INTERSECTION POINT TESTS ===============
+TEST(LineTest, IntersectionPointIsCorrect) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 1, 0));
+    Line l2(Vector3D(1, 0, 0), Vector3D(-1, 1, 0));
+    Vector3D p = l1.intersect_point(l2);
+    EXPECT_NEAR(p.x(), 0.5, 1e-6);
+    EXPECT_NEAR(p.y(), 0.5, 1e-6);
+    EXPECT_NEAR(p.z(), 0.0, 1e-6);
+}
+
+TEST(LineTest, NonIntersectingLinesReturnNaN) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Line l2(Vector3D(0, 1, 0), Vector3D(0, 0, 1));
+    Vector3D p = l1.intersect_point(l2);
+    EXPECT_TRUE(std::isnan(p.x()));
+    EXPECT_TRUE(std::isnan(p.y()));
+    EXPECT_TRUE(std::isnan(p.z()));
+}
+
+// =============== EDGE CASES ===============
+TEST(LineTest, IntersectionWithAlmostParallelLinesIsStable) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Line l2(Vector3D(0, 1e-7, 0), Vector3D(1, 1e-8, 0)); // почти параллельные
+    EXPECT_FALSE(l1.is_intersect(l2)); // должны считаться непересекающимися
+}
+
+TEST(LineTest, HandlesLargeNumbers) {
+    Line l1(Vector3D(1e9, 1e9, 1e9), Vector3D(1, 1, 0));
+    Line l2(Vector3D(1e9, 1e9, 1e9), Vector3D(-1, 1, 0));
+    EXPECT_TRUE(l1.is_intersect(l2));
+    Vector3D p = l1.intersect_point(l2);
+    EXPECT_TRUE(p.is_valid());
+    EXPECT_FALSE(std::isnan(p.x()));
+}
+
+TEST(LineTest, HandlesNegativeCoordinates) {
+    Line l1(Vector3D(-10, -10, 0), Vector3D(1, 1, 0));
+    Line l2(Vector3D(-9, -11, 0), Vector3D(1, -1, 0));
+    Vector3D p = l1.intersect_point(l2);
+    EXPECT_NEAR(p.x(), -10.0, 1e-6);
+    EXPECT_NEAR(p.y(), -10.0, 1e-6);
+}
+
+TEST(LineTest, IntersectionWithSameLineGivesValidPoint) {
+    Line l1(Vector3D(0, 0, 0), Vector3D(1, 1, 0));
+    Line l2(Vector3D(2, 2, 0), Vector3D(2, 2, 0)); // параллельна и совпадает
+    EXPECT_TRUE(l1.is_parallel(l2));
+    EXPECT_FALSE(l1.is_intersect(l2)); // строго говоря, совпадение = бесконечное множество, не “true”
 }

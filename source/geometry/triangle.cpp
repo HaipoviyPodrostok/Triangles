@@ -11,7 +11,7 @@ Triangle::Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c)
     : a_(a), b_(b), c_(c), 
         ab_{a, b}, bc_{b, c}, ac_{a, c} {
 
-    normal_ = a_.cross(b_);
+    normal_ = (b_ - a_).cross(c_ - a_);
 }
 
 bool Triangle::is_valid() const {
@@ -29,23 +29,23 @@ void Triangle::print() const {
 }
 
 bool Triangle::intersection(const Triangle& other) const {
-    Plane first_pl  = this->find_plane();
-    Plane second_pl = other.find_plane();
-
-    if (first_pl.parallel(second_pl)) { return false; }
-
-    if (first_pl.match(second_pl)) {
+    const Plane first_pl  = this->find_plane();
+    const Plane second_pl = other.find_plane();
+    
+    if (first_pl.is_match(second_pl)) {
         return is_intersect_2d(other);
     }
+
+    if (first_pl.is_parallel(second_pl)) { return false; }
 
     return false;
 }
 
 Plane Triangle::find_plane() const {
-    Vector3D ab = {b_.x() - a_.x(), b_.y() - a_.y(), b_.z() - a_.z()};
-    Vector3D ac = {c_.x() - a_.x(), c_.y() - a_.y(), c_.z() - a_.z()};
+    const Vector3D ab = {b_.x() - a_.x(), b_.y() - a_.y(), b_.z() - a_.z()};
+    const Vector3D ac = {c_.x() - a_.x(), c_.y() - a_.y(), c_.z() - a_.z()};
 
-    Vector3D normal = ab.cross(ac);
+    const Vector3D normal = ab.cross(ac);
 
     return Plane{a_, normal};
 }
@@ -58,16 +58,16 @@ Side Triangle::get_side(const Vector3D& side_normal) const {
     return RIGHT_SIDE;
 }
 
-bool Triangle::is_inside(const Triangle&  other) const {
-    Vector3D p = other.a_;
+bool Triangle::is_inside(const Vector3D& p) const {
+    // Vector3D p = other.a_;
 
-    Vector3D n1 = (b_ - a_).cross(p - a_);
-    Vector3D n2 = (c_ - b_).cross(p - b_);
-    Vector3D n3 = (a_ - c_).cross(p - c_);
-    
-    Side side_ab = get_side(n1);
-    Side side_bc = get_side(n2);
-    Side side_ca = get_side(n3);
+    const Vector3D n1 = (b_ - a_).cross(p - a_);
+    const Vector3D n2 = (c_ - b_).cross(p - b_);
+    const Vector3D n3 = (a_ - c_).cross(p - c_);
+
+    const Side side_ab = get_side(n1);
+    const Side side_bc = get_side(n2);
+    const Side side_ca = get_side(n3);
     
     if (side_ab == side_bc && side_bc == side_ca) {
         return true;
@@ -93,7 +93,13 @@ bool Triangle::is_intersect_2d(const Triangle& other) const {
         return true;
     }
 
-    if (is_inside(other)) { return true; }
+    if (is_inside(other.a_)) { return true; }
+    if (is_inside(other.b_)) { return true; }
+    if (is_inside(other.c_)) { return true; }
+
+    if (other.is_inside(a_)) { return true; }
+    if (other.is_inside(b_)) { return true; }
+    if (other.is_inside(c_)) { return true; }
 
     return false;
 }

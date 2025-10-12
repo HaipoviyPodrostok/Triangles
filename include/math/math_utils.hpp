@@ -7,12 +7,17 @@ inline constexpr float inner_area_width = 100.0;
 
 namespace math {
 
-inline constexpr bool is_zero(float x, float tol = flt_tolerance) {
-    return std::fabs(x) < tol;
+template <typename T>
+inline bool is_equal(T a, T b, T eps = static_cast<T>(flt_tolerance)) {
+    if (std::isnan(a) || std::isnan(b)) return false;
+    if (std::isinf(a) || std::isinf(b)) return a == b;
+
+    T diff = std::fabs(a - b);
+    T norm = std::max(std::fabs(a), std::fabs(b));
+    return diff <= eps * (1 + norm);
 }
 
-template <typename T>
-bool is_equal(T a, T b, T eps = static_cast<T>(1e-6)) {
-    return std::fabs(a - b) < eps;
+inline bool is_zero(float x, float tol = flt_tolerance) {
+    return is_equal(x, 0.0f, tol);
 }
 } // namespace math
