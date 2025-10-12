@@ -36,4 +36,10 @@ private:
     float y_ = NAN;
     float z_ = NAN;
 };
+
+enum class Axis {
+    X = 0,
+    Y = 1,
+    Z = 2,
+};
 } // namespace geometry
