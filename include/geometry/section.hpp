@@ -5,8 +5,6 @@
 
 namespace geometry {
 
-enum Side { LEFT_SIDE, INTER_SIDE, RIGHT_SIDE };
-
 class Section {
 public:
     Section(const Vector3D& start, const Vector3D& end);
@@ -15,7 +13,6 @@ public:
     bool is_intersect(const Section& other) const;
     float length() const;
     Line get_line() const;
-    Side get_side(const Vector3D& p) const;
     bool is_contains(const Vector3D& p) const;
     void print() const;
 

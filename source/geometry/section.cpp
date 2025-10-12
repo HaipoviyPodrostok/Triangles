@@ -71,24 +71,11 @@ bool Section::is_intersect(const Section& other) const {
     const float left_max  = std::max(a1, a2);
     const float right_min = std::min(b1, b2);
 
-    return right_min + flt_tolerance >= left_max;
+    return right_min + math::eps >= left_max;
 }
 
 float Section::length() const {
     return (a_ - b_).length();
-}
-
-Side Section::get_side(const Vector3D& p) const {
-    Vector3D ab = b_ - a_;
-    Vector3D ap = p  - a_;
-
-    Vector3D n = ab.cross(ap);
-    float n_length = n.length();
-
-    if (n_length > 0) { return LEFT_SIDE; }
-    if (n_length < 0) { return  RIGHT_SIDE; }
-
-    return INTER_SIDE;
 }
 
 bool Section::is_contains(const Vector3D& p) const {

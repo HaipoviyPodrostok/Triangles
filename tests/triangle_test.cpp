@@ -1,66 +1,133 @@
+#include "geometry/triangle.hpp"
 #include <gtest/gtest.h>
 #include "geometry/triangle.hpp"
-
+#include "geometry/vector_3d.hpp"
+#include "math/math_utils.hpp"
 using namespace geometry;
+constexpr float eps = math::flt_tolerance;
 
-// Все треугольники лежат на одной плоскости: x + y + z = 3 (=> z = 3 - x - y)
+// === Вспомогательные функции ===
+Triangle make_triangle_xy() {
+    // Простой треугольник в плоскости Z = 0
+    return Triangle(Vector3D(0, 0, 0),
+                    Vector3D(1, 0, 0),
+                    Vector3D(0, 1, 0));
+}
 
-TEST(TriangleCoplanarTest, IdenticalTriangles) {
-    Triangle t1({1, 1, 1}, {2, 1, 0}, {1, 2, 0});
-    Triangle t2({1, 1, 1}, {2, 1, 0}, {1, 2, 0});
+// === ТЕСТЫ ДЛЯ is_inside ===
+TEST(TriangleIsInside, InsidePoint) {
+    Triangle t = make_triangle_xy();
+    EXPECT_TRUE(t.is_inside(Vector3D(0.25, 0.25, 0)));
+}
+
+TEST(TriangleIsInside, OnVertex) {
+    Triangle t = make_triangle_xy();
+    EXPECT_TRUE(t.is_inside(Vector3D(0, 0, 0)));
+    EXPECT_TRUE(t.is_inside(Vector3D(1, 0, 0)));
+    EXPECT_TRUE(t.is_inside(Vector3D(0, 1, 0)));
+}
+
+TEST(TriangleIsInside, OnEdge) {
+    Triangle t = make_triangle_xy();
+    EXPECT_TRUE(t.is_inside(Vector3D(0.5, 0, 0)));
+    EXPECT_TRUE(t.is_inside(Vector3D(0.5, 0.5, 0)));
+    EXPECT_TRUE(t.is_inside(Vector3D(0, 0.5, 0)));
+}
+
+TEST(TriangleIsInside, OutsidePoint) {
+    Triangle t = make_triangle_xy();
+    EXPECT_FALSE(t.is_inside(Vector3D(1.0, 1.0, 0)));
+    EXPECT_FALSE(t.is_inside(Vector3D(-0.1, 0.1, 0)));
+}
+
+TEST(TriangleIsInside, AbovePlaneShouldFail) {
+    Triangle t = make_triangle_xy();
+    EXPECT_FALSE(t.is_inside(Vector3D(0.25, 0.25, 0.01)));
+    EXPECT_FALSE(t.is_inside(Vector3D(0.25, 0.25, -0.01)));
+}
+
+// === ТЕСТЫ ДЛЯ intersection() ===
+TEST(TriangleIntersection, CoplanarFullOverlap) {
+    Triangle t1 = make_triangle_xy();
+    Triangle t2(Vector3D(0.2, 0.0, 0),
+                Vector3D(1.0, 0.0, 0),
+                Vector3D(0.2, 0.8, 0));
     EXPECT_TRUE(t1.intersection(t2));
 }
 
-TEST(TriangleCoplanarTest, OneInsideAnother) {
-    // большой треугольник
-    Triangle outer({0, 0, 3}, {3, 0, 0}, {0, 3, 0});
-    // вложенный маленький треугольник
-    Triangle inner({1, 1, 1}, {1.5, 1, 0.5}, {1, 1.5, 0.5});
-    EXPECT_TRUE(outer.intersection(inner));
-    EXPECT_TRUE(inner.intersection(outer));
-}
-
-TEST(TriangleCoplanarTest, PartialOverlap) {
-    Triangle t1({0, 0, 3}, {3, 0, 0}, {0, 3, 0});
-    Triangle t2({1, 0.5, 1.5}, {2.5, 0.5, 0}, {0.5, 2, 0.5});
+TEST(TriangleIntersection, CoplanarPartialOverlap) {
+    Triangle t1 = make_triangle_xy();
+    Triangle t2(Vector3D(0.5, -0.2, 0),
+                Vector3D(1.0, -0.2, 0),
+                Vector3D(0.5, 0.5, 0));
     EXPECT_TRUE(t1.intersection(t2));
 }
 
-TEST(TriangleCoplanarTest, TouchAtVertex) {
-    Triangle t1({1, 1, 1}, {2, 1, 0}, {1, 2, 0});
-    Triangle t2({2, 1, 0}, {2.5, 0.5, 0}, {2.5, 1.5, -0.5}); // подогнан по той же плоскости
-    EXPECT_TRUE(t1.intersection(t2)); // касание в (2,1,0)
-}
-
-TEST(TriangleCoplanarTest, TouchAlongEdge) {
-    Triangle t1({0, 0, 3}, {3, 0, 0}, {0, 3, 0});
-    Triangle t2({3, 0, 0}, {0, 3, 0}, {3, 3, -3});
-    // для копланарности скорректируем третью вершину:
-    Triangle t2_fixed({3, 0, 0}, {0, 3, 0}, {2, 1, 0});
-    EXPECT_TRUE(t1.intersection(t2_fixed));
-}
-
-TEST(TriangleCoplanarTest, NoIntersectionClose) {
-    Triangle t1({1, 1, 1}, {2, 1, 0}, {1, 2, 0});
-    // чуть сдвинутый вдоль x, всё ещё в той же плоскости
-    Triangle t2({2.2, 1, -0.2}, {3.2, 1, -1.2}, {2.2, 2, -1.2});
-    // исправим, чтобы лежал на x + y + z = 3
-    Triangle t2_fixed({2.2, 1, -0.2}, {3.2, 1, -1.2}, {2.2, 2, -1.2 + 0.2});
-    EXPECT_FALSE(t1.intersection(t2_fixed));
-}
-
-TEST(TriangleCoplanarTest, NoIntersectionFarApart) {
-    Triangle t1({1, 1, 1}, {2, 1, 0}, {1, 2, 0});
-    // далеко по оси X, но тоже x + y + z = 3
-    Triangle t2({6, 1, -4}, {7, 1, -5}, {6, 2, -5});
-    // скорректируем по плоскости:
-    Triangle t2_fixed({6, 1, -4}, {7, 1, -5}, {6, 2, -5});
-    EXPECT_FALSE(t1.intersection(t2_fixed));
-}
-
-TEST(TriangleCoplanarTest, SharedEdgeOppositeNormal) {
-    Triangle t1({0, 0, 3}, {3, 0, 0}, {0, 3, 0});
-    // тот же треугольник, но вершины в обратном порядке
-    Triangle t2({0, 3, 0}, {3, 0, 0}, {0, 0, 3});
+TEST(TriangleIntersection, CoplanarTouchAtVertex) {
+    Triangle t1 = make_triangle_xy();
+    Triangle t2(Vector3D(1.0, 0.0, 0),
+                Vector3D(2.0, 0.0, 0),
+                Vector3D(1.0, 1.0, 0));
     EXPECT_TRUE(t1.intersection(t2));
+}
+
+TEST(TriangleIntersection, CoplanarTouchAlongEdge) {
+    Triangle t1 = make_triangle_xy();
+    Triangle t2(Vector3D(0.0, 1.0, 0),
+                Vector3D(1.0, 0.0, 0),
+                Vector3D(1.0, 1.0, 0));
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+TEST(TriangleIntersection, CoplanarDisjoint) {
+    Triangle t1 = make_triangle_xy();
+    Triangle t2(Vector3D(2.0, 0.0, 0),
+                Vector3D(3.0, 0.0, 0),
+                Vector3D(2.0, 1.0, 0));
+    EXPECT_FALSE(t1.intersection(t2));
+}
+
+TEST(TriangleIntersection, NonCoplanarShouldFail) {
+    Triangle t1 = make_triangle_xy();
+    Triangle t2(Vector3D(0, 0, 1),
+                Vector3D(1, 0, 1),
+                Vector3D(0, 1, 1));
+    EXPECT_FALSE(t1.intersection(t2));
+}
+
+TEST(SectionOppositeDirection, CollinearOppositeDirectionOverlap) {
+    Section s1(Vector3D(0, 0, 0), Vector3D(2, 0, 0));     // слева направо
+    Section s2(Vector3D(3, 0, 0), Vector3D(1, 0, 0));     // справа налево
+    EXPECT_TRUE(s1.is_intersect(s2));  // перекрываются на [1,2]
+    EXPECT_TRUE(s2.is_intersect(s1));  // направление не должно влиять
+}
+
+// === КАСАНИЕ концами, противоположные направления ===
+TEST(SectionOppositeDirection, CollinearOppositeDirectionTouchAtEndpoint) {
+    Section s1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Section s2(Vector3D(2, 0, 0), Vector3D(1, 0, 0));     // в обратную сторону
+    EXPECT_TRUE(s1.is_intersect(s2));  // касание в точке (1,0)
+    EXPECT_TRUE(s2.is_intersect(s1));  // симметрично
+}
+
+// === КОЛЛИНЕАРНЫЕ, но раздельные (не касаются) ===
+TEST(SectionOppositeDirection, CollinearOppositeDirectionDisjoint) {
+    Section s1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Section s2(Vector3D(2 + eps * 10, 0, 0), Vector3D(3, 0, 0)); // разрыв > eps
+    EXPECT_FALSE(s1.is_intersect(s2));
+    EXPECT_FALSE(s2.is_intersect(s1));
+}
+
+// === НЕ коллинеарные, но пересекаются под углом ===
+TEST(SectionOppositeDirection, CrossingUnderAngle) {
+    Section s1(Vector3D(0, 0, 0), Vector3D(1, 1, 0));
+    Section s2(Vector3D(0, 1, 0), Vector3D(1, 0, 0));
+    EXPECT_TRUE(s1.is_intersect(s2)); // крест-накрест
+}
+
+// === Почти касаются, но не пересекаются (с eps-зазором) ===
+TEST(SectionOppositeDirection, AlmostTouchButOutsideEps) {
+    Section s1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
+    Section s2(Vector3D(1 + eps * 10, 0, 0), Vector3D(2 + eps * 10, 0, 0));
+    EXPECT_FALSE(s1.is_intersect(s2)); // зазор больше eps
 }

@@ -16,22 +16,23 @@ public:
     bool is_valid() const;
     void print() const;
     bool intersection(const Triangle& other) const;
-    bool is_inside(const Vector3D& p) const;
-    bool is_intersect_2d(const Triangle& other) const;
-
-private:
+    
+    private:
     Vector3D a_;
     Vector3D b_;
     Vector3D c_;
-
+    
     Section ab_;
     Section bc_;
     Section ac_;
-
+    
     Vector3D normal_;
     
-    Plane find_plane() const;
-    Side get_side(const Vector3D& ) const;
+    bool is_intersect_2d(const Triangle& other) const;
+    bool is_inside(const Vector3D& p) const;
+    bool is_intersect_3d(const Triangle& other) const;
+
+    Plane get_plane() const;
 };
 } // namespace geometry
 

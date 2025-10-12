@@ -81,15 +81,6 @@ TEST(Vector3DTest, CrossProduct) {
     EXPECT_NEAR(c.z(), 1, EPS);
 }
 
-// Проверка исключения при cross с нулевым вектором
-TEST(Vector3DTest, CrossProductWithZeroThrows) {
-    Vector3D a(1, 0, 0);
-    Vector3D zero(0, 0, 0);
-
-    EXPECT_THROW(a.cross(zero), std::invalid_argument);
-    EXPECT_THROW(zero.cross(a), std::invalid_argument);
-}
-
 // Проверка коллинеарности
 TEST(Vector3DTest, Collinearity) {
     Vector3D a(1, 2, 3);

@@ -1,4 +1,5 @@
 #include "geometry/triangle.hpp"
+#include "geometry/plane.hpp"
 #include "geometry/section.hpp"
 #include "geometry/vector_3d.hpp"
 #include "math/math_utils.hpp"
@@ -29,8 +30,11 @@ void Triangle::print() const {
 }
 
 bool Triangle::intersection(const Triangle& other) const {
-    const Plane first_pl  = this->find_plane();
-    const Plane second_pl = other.find_plane();
+    assert(this->is_valid());
+    assert(other.is_valid());
+    
+    const Plane first_pl  = this->get_plane();
+    const Plane second_pl = other.get_plane();
     
     if (first_pl.is_match(second_pl)) {
         return is_intersect_2d(other);
@@ -38,69 +42,71 @@ bool Triangle::intersection(const Triangle& other) const {
 
     if (first_pl.is_parallel(second_pl)) { return false; }
 
-    return false;
+    return is_intersect_3d(other);
 }
 
-Plane Triangle::find_plane() const {
-    const Vector3D ab = {b_.x() - a_.x(), b_.y() - a_.y(), b_.z() - a_.z()};
-    const Vector3D ac = {c_.x() - a_.x(), c_.y() - a_.y(), c_.z() - a_.z()};
+Plane Triangle::get_plane() const {
+    const Vector3D ab = b_ - a_;
+    const Vector3D ac = c_ - a_;
 
     const Vector3D normal = ab.cross(ac);
 
     return Plane{a_, normal};
 }
 
-Side Triangle::get_side(const Vector3D& side_normal) const {
-    float scalar = side_normal.scalar(normal_);
-    if      (scalar > 0)              { return LEFT_SIDE; }
-    else if (math::is_zero(scalar)) { return INTER_SIDE; }
-
-    return RIGHT_SIDE;
-}
-
 bool Triangle::is_inside(const Vector3D& p) const {
-    // Vector3D p = other.a_;
+    assert(p.is_valid());
+    if ( !(this->get_plane()).is_contains(p) ) { return false; }
 
-    const Vector3D n1 = (b_ - a_).cross(p - a_);
-    const Vector3D n2 = (c_ - b_).cross(p - b_);
-    const Vector3D n3 = (a_ - c_).cross(p - c_);
+    const Vector3D ab = b_ - a_;
+    const Vector3D bc = c_ - b_;
+    const Vector3D ca = a_ - c_;
+    const Vector3D ap = p - a_;
+    const Vector3D bp = p - b_;
+    const Vector3D cp = p - c_;
 
-    const Side side_ab = get_side(n1);
-    const Side side_bc = get_side(n2);
-    const Side side_ca = get_side(n3);
-    
-    if (side_ab == side_bc && side_bc == side_ca) {
-        return true;
-    }
+    const float side_ab = ( normal_.cross(ab) ).scalar(ap);
+    const float side_bc = ( normal_.cross(bc) ).scalar(bp);
+    const float side_ca = ( normal_.cross(ca) ).scalar(cp);
 
-    return false;
+    return (side_ab >= - math::eps && side_bc >= - math::eps && side_ca >= - math::eps) ||
+           (side_ab <=   math::eps && side_bc <=   math::eps && side_ca <=   math::eps);
 }
 
 bool Triangle::is_intersect_2d(const Triangle& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
+    if ( !(this->get_plane().is_match(other.get_plane())) ) { return false;}
 
-    if (ab_.is_intersect(other.ab_) ||
-        ab_.is_intersect(other.bc_) ||
-        ab_.is_intersect(other.ac_) ||
-        bc_.is_intersect(other.ab_) ||
-        bc_.is_intersect(other.bc_) ||
-        bc_.is_intersect(other.ac_) ||
-        ac_.is_intersect(other.ab_) ||
-        ac_.is_intersect(other.bc_) ||
-        ac_.is_intersect(other.ac_)) {
-            
+    const Section* sides1[3] = {&ab_, &bc_, &ac_};
+    const Section* sides2[3] = {&other.ab_, &other.bc_, &other.ac_};
+    
+    for (size_t i = 0; i < 3; i++) {
+        for (size_t j = 0; j < 3; j++) {
+            sides1[i]->is_intersect(*sides2[j]);
+        }
+    }
+
+    if (is_inside(other.a_) || is_inside(other.b_) || is_inside(other.c_)) {
         return true;
     }
 
-    if (is_inside(other.a_)) { return true; }
-    if (is_inside(other.b_)) { return true; }
-    if (is_inside(other.c_)) { return true; }
-
-    if (other.is_inside(a_)) { return true; }
-    if (other.is_inside(b_)) { return true; }
-    if (other.is_inside(c_)) { return true; }
+    if (other.is_inside(a_) || other.is_inside(b_) || other.is_inside(c_)) {
+        return true;
+    }
 
     return false;
 }
+
+bool Triangle::is_intersect_3d(const Triangle& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
+
+    const Plane pl1 = get_plane();
+    const Plane pl2 = other.get_plane();
+
+    const Vector3D dir = normal_.cross(other.normal_);
+    
+}
+
 } // namespace geometry

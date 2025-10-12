@@ -2,10 +2,11 @@
 
 #include <cmath>
 
-inline constexpr float flt_tolerance    = 1e-6f;
-inline constexpr float inner_area_width = 100.0;
-
 namespace math {
+
+inline constexpr float flt_tolerance    = 1e-6f;
+inline constexpr float eps              = 1e-6f;
+inline constexpr float inner_area_width = 100.0;
 
 template <typename T>
 inline bool is_equal(T a, T b, T eps = static_cast<T>(flt_tolerance)) {
