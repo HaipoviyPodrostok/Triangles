@@ -89,6 +89,17 @@ bool Section::is_intersect(const Line& other) const {
     return false;
 }
 
+Vector3D Section::intersect_point(const Line& other) const {
+    assert(other.is_valid());
+
+    const Line this_line = this->get_line();
+    if (this_line.is_match(other) || this_line.is_parallel(other)) {
+        return {NAN, NAN, NAN};
+    }
+
+    return this_line.intersect_point(other);
+}
+
 float Section::length() const {
     return (a_ - b_).length();
 }

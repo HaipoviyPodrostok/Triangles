@@ -17,7 +17,11 @@ public:
     void print() const;
     bool intersection(const Triangle& other) const;
     
-private:
+    bool is_intersect_2d(const Triangle& other) const;
+    bool is_inside(const Vector3D& p) const;
+    bool is_intersect_3d(const Triangle& other) const;
+
+private:    
     Vector3D a_;
     Vector3D b_;
     Vector3D c_;
@@ -28,10 +32,6 @@ private:
     
     Vector3D normal_;
     
-    bool is_intersect_2d(const Triangle& other) const;
-    bool is_inside(const Vector3D& p) const;
-    bool is_intersect_3d(const Triangle& other) const;
-
     Plane get_plane() const;
     Line get_intersect_line(const Triangle& other) const;
 };

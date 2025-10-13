@@ -4,7 +4,9 @@
 #include "geometry/vector_3d.hpp"
 #include "math/math_utils.hpp"
 #include <cassert>
+#include <cstddef>
 #include <iostream>
+#include <vector>
 
 namespace geometry {
 
@@ -103,29 +105,53 @@ bool Triangle::is_intersect_3d(const Triangle& other) const {
     assert(other.is_valid());
 
     const Line intersect_line = get_intersect_line(other);
+    
+    const Section* sides1[3] = {&ab_, &bc_, &ac_};
+    std::vector<Vector3D> intersect_points1;
 
-    const Line this_line_ab = ab_.get_line();
-    const Line this_line_bc = bc_.get_line(); 
-    const Line this_line_ac = ac_.get_line(); 
-
-    const Line other_line_ab = other.ab_.get_line();
-    const Line other_line_bc = other.bc_.get_line();
-    const Line other_line_ac = other.ac_.get_line();
-
-    Vector3D intersect_sec_a = {NAN, NAN, NAN};
-    Vector3D intersect_sec_b = {NAN, NAN, NAN};
-
-    if (ab_.is_intersect(intersect_line)) {
-
+    for (size_t i = 0; i < 3; i++) {
+        if (sides1[i]->is_intersect(intersect_line)) {
+            Vector3D p = sides1[i]->intersect_point(intersect_line);
+            if (p.is_valid()) {
+                intersect_points1.push_back(p);
+            }
+        }
     }
 
+    if (intersect_points1.size() < 2) {
+        return false;
+    }
 
+    const Section* sides2[3] = {&other.ab_, &other.bc_, &other.ac_};
+    std::vector<Vector3D> intersect_points2;
+
+    for (size_t i = 0; i < 3; i++) {
+        if (sides1[i]->is_intersect(intersect_line)) {
+            Vector3D p = sides2[i]->intersect_point(intersect_line);
+            if (p.is_valid()) {
+                intersect_points2.push_back(p);
+            }
+        }
+    } // TODO maybe template or lambda
+
+    if (intersect_points1.size() < 2) {
+        return false;
+    }
+
+    const Section s1{intersect_points1[0], intersect_points1[1]};
+    const Section s2{intersect_points2[0], intersect_points2[1]};
+
+    return s1.is_intersect(s2);
 }
 
 Line Triangle::get_intersect_line(const Triangle& other) const {
-        const Plane pl1 = get_plane();
+    const Plane pl1 = get_plane();
     const Plane pl2 = other.get_plane();
     
+    if (pl1.is_parallel(pl2) || pl1.is_match(pl2)) {
+        return {{NAN,NAN, NAN}, {NAN, NAN, NAN}};
+    }
+
     const float D1 = pl1.D();
     const float D2 = pl2.D();
     

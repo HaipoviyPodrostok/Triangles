@@ -63,7 +63,7 @@ bool Line::is_intersect(const Line& other) const {
 Vector3D Line::intersect_point(const Line& other) const {
     assert(is_valid());
     assert((other.is_valid()));
-    if (!this->is_intersect(other) || this->is_match(other)) {
+    if (!(this->is_intersect(other)) || this->is_match(other)) {
         return {NAN, NAN, NAN};
     }
 
