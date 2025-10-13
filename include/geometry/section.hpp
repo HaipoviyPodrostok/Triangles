@@ -7,6 +7,9 @@ namespace geometry {
 
 class Section {
 public:
+    Vector3D a_;
+    Vector3D b_;
+
     Section(const Vector3D& start, const Vector3D& end);
 
     bool is_valid() const;
@@ -17,9 +20,5 @@ public:
     Line get_line() const;
     bool is_contains(const Vector3D& p) const;
     void print() const;
-
-private:
-    Vector3D a_;
-    Vector3D b_;
 };
 } // namespace geometry

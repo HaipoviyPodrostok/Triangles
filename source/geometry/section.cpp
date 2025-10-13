@@ -30,7 +30,7 @@ bool Section::is_intersect(const Section& other) const {
 
     if (l1.is_intersect(l2)) {
         const Vector3D p = l1.intersect_point(l2);
-        assert(p.is_valid());
+        if (!p.is_valid()) { return false; }
         if ( this->is_contains(p) && other.is_contains(p) ) {
             return true;
         }
@@ -42,9 +42,9 @@ bool Section::is_intersect(const Section& other) const {
 
     const Vector3D d = b_ - a_;
     
-    const float abs_x = fabs(d.x());
-    const float abs_y = fabs(d.y());
-    const float abs_z = fabs(d.z());
+    const float abs_x = fabs(d.x_);
+    const float abs_y = fabs(d.y_);
+    const float abs_z = fabs(d.z_);
 
     Axis axis = (abs_x >= abs_y && abs_x >= abs_z) ? Axis::X :
                 (abs_y >= abs_z ? Axis::Y : Axis::Z);
@@ -52,11 +52,11 @@ bool Section::is_intersect(const Section& other) const {
     auto get_1d_coord = [&](const Vector3D& v) {
         switch (axis) {
             case Axis::X:
-                return v.x();
+                return v.x_;
             case Axis::Y:
-                return v.y();
+                return v.y_;
             case Axis::Z:
-                return v.z();
+                return v.z_;
             default:
                 return NAN;
         }
@@ -82,7 +82,7 @@ bool Section::is_intersect(const Line& other) const {
 
     if (l1.is_intersect(other)) {
         const Vector3D p = l1.intersect_point(other);
-        assert(p.is_valid());
+        if (p.is_valid()) { return false; }
         return this->is_contains(p);
     }
 
@@ -105,13 +105,15 @@ float Section::length() const {
 }
 
 bool Section::is_contains(const Vector3D& p) const {
+    if (p.is_valid()) { return false; }
+    
     const Vector3D ap = p - a_;
     const Vector3D ab = b_ - a_;
     const Vector3D bp = p - b_;
 
     if ((ap).is_collinear(ab)) {
-        float scalar_ab_bp = ap.scalar(bp);
-        return (scalar_ab_bp < 0 || math::is_zero(scalar_ab_bp));
+        float scalar_ap_bp = ap.scalar(bp);
+        return (scalar_ap_bp < 0 || math::is_zero(scalar_ap_bp));
     }
 
     return false;

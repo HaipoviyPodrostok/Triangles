@@ -1,15 +1,12 @@
 #include "geometry/vector_3d.hpp"
 #include "math/math_utils.hpp"
 #include <cassert>
+#include <cmath>
 
 namespace geometry {
 
 Vector3D::Vector3D(float x, float y, float z)
     : x_(x), y_(y), z_(z) { }
-
-float Vector3D::x() const { return x_; }
-float Vector3D::y() const { return y_; }
-float Vector3D::z() const { return z_; }
 
 Vector3D Vector3D::operator+ (const Vector3D& other) const {
     return Vector3D{x_ + other.x_, y_ + other.y_, z_ + other.z_};

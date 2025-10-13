@@ -23,7 +23,7 @@ bool Plane::is_match(const Plane& other) const {
     float sign = (normal_.is_codirected(other.normal_)) ? 1.0f : -1.0f;
     float distance = std::fabs(D_ - sign * other.D_) / normal_.length();
     
-    return distance < math::eps;
+    return distance <= math::eps;
 }
 
 bool Plane::is_parallel(const Plane& other) const {
@@ -33,7 +33,7 @@ bool Plane::is_parallel(const Plane& other) const {
     float sign = (normal_.is_codirected(other.normal_)) ? 1.0f : -1.0f;
     float distance = std::fabs(D_ - sign * other.D_) / normal_.length();
     
-    return distance > math::eps;
+    return distance >= math::eps;
 }
 
 bool Plane::is_contains(const Vector3D& p) const {

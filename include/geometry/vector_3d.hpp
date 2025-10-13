@@ -7,13 +7,18 @@
 
 namespace geometry {
 
+// TODO template
 class Vector3D {
 public:   
-    Vector3D(float x = NAN, float y = NAN, float z = NAN);
+    float x_ = NAN;
+    float y_ = NAN;
+    float z_ = NAN;
 
-    float x() const;
-    float y() const;
-    float z() const;
+    Vector3D(float x = NAN, float y = NAN, float z = NAN); 
+
+    static Vector3D zero;
+
+    static inline Vector3D non_valid() { return {NAN, NAN, NAN}; }
     
     bool is_valid() const;
     bool is_zero()  const;
@@ -22,7 +27,7 @@ public:
 
     float length() const;
     float scalar(const Vector3D& other) const;
-
+    // +=, -=, *=, /=
     Vector3D operator+ (const Vector3D& other)  const;
     Vector3D operator- (const Vector3D& other)  const;
     Vector3D operator* (const float& scalar) const;
@@ -31,11 +36,6 @@ public:
     Vector3D cross(const Vector3D& other) const;
     
     void print() const;
-
-private:
-    float x_ = NAN;
-    float y_ = NAN;
-    float z_ = NAN;
 };
 
 enum class Axis {

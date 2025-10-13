@@ -83,18 +83,20 @@ bool Triangle::is_intersect_2d(const Triangle& other) const {
     const Section* sides1[3] = {&ab_, &bc_, &ac_};
     const Section* sides2[3] = {&other.ab_, &other.bc_, &other.ac_};
     
-    for (size_t i = 0; i < 3; i++) {
-        for (size_t j = 0; j < 3; j++) {
-            sides1[i]->is_intersect(*sides2[j]);
-        }
-    }
-
     if (is_inside(other.a_) || is_inside(other.b_) || is_inside(other.c_)) {
         return true;
     }
 
     if (other.is_inside(a_) || other.is_inside(b_) || other.is_inside(c_)) {
         return true;
+    }
+    
+    for (size_t i = 0; i < 3; i++) {
+        for (size_t j = 0; j < 3; j++) {
+            if (sides1[i]->is_intersect(*sides2[j])) {
+                return true;
+            };
+        }
     }
 
     return false;
@@ -149,7 +151,7 @@ Line Triangle::get_intersect_line(const Triangle& other) const {
     const Plane pl2 = other.get_plane();
     
     if (pl1.is_parallel(pl2) || pl1.is_match(pl2)) {
-        return {{NAN,NAN, NAN}, {NAN, NAN, NAN}};
+        return {Vector3D::non_valid(), Vector3D::non_valid()};
     }
 
     const float D1 = pl1.D();

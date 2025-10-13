@@ -1,5 +1,4 @@
 #include <cassert>
-#include <cmath>
 #include <iostream>
 
 #include "geometry/line.hpp"
@@ -64,7 +63,7 @@ Vector3D Line::intersect_point(const Line& other) const {
     assert(is_valid());
     assert((other.is_valid()));
     if (!(this->is_intersect(other)) || this->is_match(other)) {
-        return {NAN, NAN, NAN};
+        return Vector3D::non_valid(); // FIXME
     }
 
     const Vector3D& p1 = origin_;
@@ -73,7 +72,7 @@ Vector3D Line::intersect_point(const Line& other) const {
     const Vector3D& d2 = other.dir_;
 
     const Vector3D n = d1.cross(d2);
-    if (n.is_zero()) { return {NAN, NAN, NAN}; }
+    if (n.is_zero()) { return Vector3D::non_valid(); }
     const float n_len_squared = n.length() * n.length();
 
     const float t = ( (p2 - p1).cross(d2) ).scalar(n) / n_len_squared;
@@ -86,7 +85,7 @@ Vector3D Line::intersect_point(const Line& other) const {
         return a;
     }
 
-    return Vector3D{NAN, NAN, NAN}; //NOTE or nullopt
+    return Vector3D::non_valid(); //NOTE or nullopt
 }
 
 void Line::print() const {

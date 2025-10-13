@@ -20,6 +20,7 @@ public:
 
     Vector3D intersect_point(const Line& other) const;
     void print() const;
+    // Vector3D{.x = 1, .y = 2, .z = 3};
 
 private:
     Vector3D origin_;
