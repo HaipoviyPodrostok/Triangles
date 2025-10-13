@@ -11,6 +11,7 @@ public:
 
     bool is_valid() const;
     bool is_intersect(const Section& other) const;
+    bool is_intersect(const Line& other) const;
     float length() const;
     Line get_line() const;
     bool is_contains(const Vector3D& p) const;

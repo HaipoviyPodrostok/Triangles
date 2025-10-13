@@ -13,7 +13,7 @@ Line::Line(const Vector3D& origin, const Vector3D& dir)
     
     if (dir.is_zero()) {
         throw std::invalid_argument("Direction vector can not be (0, 0, 0)");
-    } //TODO throw to where?
+    }
 }
 
 Vector3D Line::origin() const { return origin_; }
@@ -23,8 +23,14 @@ bool Line::is_valid() const {
     return origin_.is_valid() && dir_.is_valid() && !(dir_.is_zero());
 }
 
-bool Line::is_parallel(const Line& other) const {        
-    return (dir_.is_collinear(other.dir_));
+bool Line::is_match(const Line& other) const {
+    return dir_.is_collinear(other.dir_) &&
+           (origin_ - other.origin_).is_collinear(dir_);
+}
+
+bool Line::is_parallel(const Line& other) const {
+    return dir_.is_collinear(other.dir_) &&
+           !(origin_ - other.origin_).is_collinear(dir_);
 }
 
 bool Line::is_contains(const Vector3D& point) const {
@@ -35,9 +41,8 @@ bool Line::is_intersect(const Line& other) const {
     assert(is_valid());
     assert(other.is_valid());
 
-    if (is_parallel(other)) {
-        return false;
-    }
+    if (is_match(other))    { return true;  }
+    if (is_parallel(other)) { return false; }
 
     const Vector3D& p1 = origin_;
     const Vector3D& d1 = dir_;
@@ -58,7 +63,9 @@ bool Line::is_intersect(const Line& other) const {
 Vector3D Line::intersect_point(const Line& other) const {
     assert(is_valid());
     assert((other.is_valid()));
-    (is_intersect(other));
+    if (!this->is_intersect(other) || this->is_match(other)) {
+        return {NAN, NAN, NAN};
+    }
 
     const Vector3D& p1 = origin_;
     const Vector3D& d1 = dir_;

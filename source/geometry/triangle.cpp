@@ -102,11 +102,41 @@ bool Triangle::is_intersect_3d(const Triangle& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
 
-    const Plane pl1 = get_plane();
-    const Plane pl2 = other.get_plane();
+    const Line intersect_line = get_intersect_line(other);
 
-    const Vector3D dir = normal_.cross(other.normal_);
-    
+    const Line this_line_ab = ab_.get_line();
+    const Line this_line_bc = bc_.get_line(); 
+    const Line this_line_ac = ac_.get_line(); 
+
+    const Line other_line_ab = other.ab_.get_line();
+    const Line other_line_bc = other.bc_.get_line();
+    const Line other_line_ac = other.ac_.get_line();
+
+    Vector3D intersect_sec_a = {NAN, NAN, NAN};
+    Vector3D intersect_sec_b = {NAN, NAN, NAN};
+
+    if (ab_.is_intersect(intersect_line)) {
+
+    }
+
+
 }
 
+Line Triangle::get_intersect_line(const Triangle& other) const {
+        const Plane pl1 = get_plane();
+    const Plane pl2 = other.get_plane();
+    
+    const float D1 = pl1.D();
+    const float D2 = pl2.D();
+    
+    const Vector3D n1 = pl1.normal();
+    const Vector3D n2 = pl2.normal(); 
+
+    const Vector3D dir = normal_.cross(other.normal_);
+
+    const Vector3D pl_intersect_p = (n2 * D1 - n1 * D2).cross(n1.cross(n2)) /
+                                        math::sqr(( n1.cross(n2) ).length());
+
+    return {pl_intersect_p, dir};
+}
 } // namespace geometry

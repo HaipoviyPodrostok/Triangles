@@ -21,4 +21,7 @@ inline bool is_equal(T a, T b, T eps = static_cast<T>(flt_tolerance)) {
 inline bool is_zero(float x, float tol = flt_tolerance) {
     return is_equal(x, 0.0f, tol);
 }
+
+template <typename T>
+constexpr T sqr(T x) { return x * x;}
 } // namespace math

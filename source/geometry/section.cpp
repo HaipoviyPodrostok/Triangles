@@ -74,6 +74,21 @@ bool Section::is_intersect(const Section& other) const {
     return right_min + math::eps >= left_max;
 }
 
+bool Section::is_intersect(const Line& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
+    
+    const Line l1 = this->get_line();
+
+    if (l1.is_intersect(other)) {
+        const Vector3D p = l1.intersect_point(other);
+        assert(p.is_valid());
+        return this->is_contains(p);
+    }
+
+    return false;
+}
+
 float Section::length() const {
     return (a_ - b_).length();
 }

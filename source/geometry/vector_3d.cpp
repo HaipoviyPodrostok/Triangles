@@ -22,7 +22,11 @@ Vector3D Vector3D::operator- (const Vector3D& other) const {
 Vector3D Vector3D::operator* (const float& scalar) const {
     return Vector3D{x_ * scalar, y_ * scalar, z_ * scalar};
 }
- 
+
+Vector3D Vector3D::operator/ (const float& scalar) const {
+    return *this * (1 / scalar);
+}
+
 bool Vector3D::is_valid() const {
     return std::isfinite(x_) && std::isfinite(y_) && std::isfinite(z_);
 }

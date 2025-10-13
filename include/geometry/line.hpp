@@ -13,6 +13,7 @@ public:
     Vector3D dir()    const;
 
     bool is_valid() const;
+    bool is_match(const Line& other) const;
     bool is_parallel(const Line& other) const;
     bool is_intersect(const Line& other) const;
     bool is_contains(const Vector3D& point) const;

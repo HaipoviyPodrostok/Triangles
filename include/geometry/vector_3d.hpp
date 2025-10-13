@@ -26,6 +26,7 @@ public:
     Vector3D operator+ (const Vector3D& other)  const;
     Vector3D operator- (const Vector3D& other)  const;
     Vector3D operator* (const float& scalar) const;
+    Vector3D operator/ (const float& scalar) const;
 
     Vector3D cross(const Vector3D& other) const;
     

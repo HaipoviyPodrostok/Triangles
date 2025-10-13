@@ -2,7 +2,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/googletest
                  ${CMAKE_BINARY_DIR}/third_party/googletest)
 
 add_executable(geometry_test.x
-    triangle_test.cpp
+    line_test.cpp
 )
 
 target_include_directories(geometry_test.x

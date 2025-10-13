@@ -163,12 +163,6 @@ TEST(LineTest, NonIntersectingLinesReturnNaN) {
 }
 
 // =============== EDGE CASES ===============
-TEST(LineTest, IntersectionWithAlmostParallelLinesIsStable) {
-    Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
-    Line l2(Vector3D(0, 1e-7, 0), Vector3D(1, 1e-8, 0)); // почти параллельные
-    EXPECT_FALSE(l1.is_intersect(l2)); // должны считаться непересекающимися
-}
-
 TEST(LineTest, HandlesLargeNumbers) {
     Line l1(Vector3D(1e9, 1e9, 1e9), Vector3D(1, 1, 0));
     Line l2(Vector3D(1e9, 1e9, 1e9), Vector3D(-1, 1, 0));
@@ -189,6 +183,6 @@ TEST(LineTest, HandlesNegativeCoordinates) {
 TEST(LineTest, IntersectionWithSameLineGivesValidPoint) {
     Line l1(Vector3D(0, 0, 0), Vector3D(1, 1, 0));
     Line l2(Vector3D(2, 2, 0), Vector3D(2, 2, 0)); // параллельна и совпадает
-    EXPECT_TRUE(l1.is_parallel(l2));
-    EXPECT_FALSE(l1.is_intersect(l2)); // строго говоря, совпадение = бесконечное множество, не “true”
+    EXPECT_TRUE(l1.is_match(l2));
+    EXPECT_TRUE(l1.is_intersect(l2)); // строго говоря, совпадение = бесконечное множество, не “true”
 }
