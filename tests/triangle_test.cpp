@@ -3,6 +3,7 @@
 #include "geometry/triangle.hpp"
 #include "geometry/vector_3d.hpp"
 #include "math/math_utils.hpp"
+#include "geometry/geometry.hpp"
 using namespace geometry;
 constexpr float eps = math::flt_tolerance;
 

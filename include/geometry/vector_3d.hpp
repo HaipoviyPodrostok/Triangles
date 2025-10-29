@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <math.h>
 #include <gtest/gtest.h>
 
@@ -11,9 +10,9 @@ namespace geometry {
 // TODO template
 struct Vector3D {
 public:   
-    float x = NAN;
-    float y = NAN;
-    float z = NAN;
+    float x;
+    float y;
+    float z;
 
     Vector3D(float x_ = NAN, float y_ = NAN, float z_ = NAN);
 
@@ -36,11 +35,5 @@ public:
     Vector3D cross(const Vector3D& other) const;
     
     void print() const;
-};
-
-enum class Axis {
-    X = 0,
-    Y = 1,
-    Z = 2,
 };
 } // namespace geometry

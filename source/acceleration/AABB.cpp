@@ -7,7 +7,7 @@
 #include "acceleration/AABB.hpp"
 
 
-namespace aabb {
+namespace acceleration {
 
 AABB::AABB(const geometry::Triangle& tri)
     : min{std::fmin( std::fmin( tri.a.x, tri.b.x ), tri.c.x ),
@@ -67,4 +67,4 @@ void AABB::merge(const AABB& other) {
     min.y = fmax(max.y, other.max.y);
     min.z = fmax(max.z, other.max.z);
 }
-} // namespace aabb
+} // namespace acceleration

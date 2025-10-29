@@ -213,4 +213,12 @@ Line Triangle::get_intersect_line(const Triangle& other) const {
 
     return {pl_intersect_p, dir};
 }
+
+Vector3D Triangle::find_centre() const {
+    assert(this->is_valid());
+
+    return {(a.x + b.x + c.x) / 3.0f, 
+            (a.y + b.y + c.y) / 3.0f,
+            (a.z + b.z + c.z) / 3.0f };
+}
 } // namespace geometry

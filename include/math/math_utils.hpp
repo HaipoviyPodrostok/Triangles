@@ -24,4 +24,10 @@ inline bool is_zero(float x, float tol = flt_tolerance) {
 
 template <typename T>
 constexpr T sqr(T x) { return x * x;}
+
+enum class Axis {
+    X = 0,
+    Y = 1,
+    Z = 2,
+};
 } // namespace math

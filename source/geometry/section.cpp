@@ -36,16 +36,16 @@ bool Section::is_intersect(const Section& other) const {
         const float abs_y = fabs(d.y);
         const float abs_z = fabs(d.z);
 
-        Axis axis = (abs_x >= abs_y && abs_x >= abs_z) ? Axis::X :
-                    (abs_y >= abs_z ? Axis::Y : Axis::Z);
+        math::Axis axis = (abs_x >= abs_y && abs_x >= abs_z) ? math::Axis::X :
+                    (abs_y >= abs_z ? math::Axis::Y : math::Axis::Z);
             
         auto get_1d_coord = [&](const Vector3D& v) {
             switch (axis) {
-                case Axis::X:
+                case math::Axis::X:
                     return v.x;
-                case Axis::Y:
+                case math::Axis::Y:
                     return v.y;
-                case Axis::Z:
+                case math::Axis::Z:
                     return v.z;
                 default:
                     throw std::logic_error("Invalid axis in get_1d_coord()");

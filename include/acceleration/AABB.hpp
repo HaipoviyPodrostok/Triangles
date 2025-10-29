@@ -5,7 +5,7 @@
 #include "geometry/vector_3d.hpp"
 #include <cassert>
 
-namespace aabb {
+namespace acceleration {
 
 struct AABB {
     geometry::Vector3D min;
@@ -19,4 +19,4 @@ struct AABB {
     void merge(const AABB& other);
 };
 
-} // namespace aabb
+} // namespace acceleration
