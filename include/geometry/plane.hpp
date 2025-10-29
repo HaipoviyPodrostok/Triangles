@@ -19,6 +19,5 @@ public:
     bool is_match(const Plane& other) const;
     bool is_parallel(const Plane& other) const;
     bool is_contains(const Vector3D& p) const;
-    
 };
 } // namespace geometry

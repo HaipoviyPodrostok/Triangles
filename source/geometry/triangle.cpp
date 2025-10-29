@@ -11,24 +11,24 @@
 namespace geometry {
 
 Triangle::Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c)
-    : a_(a), b_(b), c_(c), 
-        ab_{a, b}, bc_{b, c}, ac_{a, c} {
-
-    normal_ = (b_ - a_).cross(c_ - a_);
-}
+    : a(a), b(b), c(c) {};
 
 bool Triangle::is_valid() const {
-    return a_.is_valid()  && b_.is_valid()  && c_.is_valid()  &&
-           ab_.is_valid() && ac_.is_valid() && bc_.is_valid() &&
-           (ab_.length() + bc_.length() > ac_.length())       &&
-           (ab_.length() + ac_.length() > bc_.length())       &&
-           (bc_.length() + ac_.length() > ab_.length());
+    const Section ab {a, b};
+    const Section bc {b, c};
+    const Section ac {a, c};
+    
+    return a.is_valid()  && b.is_valid()  && c.is_valid() &&
+           ab.is_valid()  && ac.is_valid()  && bc.is_valid() &&
+           (ab.length() + bc.length() > ac.length())         &&
+           (ab.length() + ac.length() > bc.length())         &&
+           (bc.length() + ac.length() > ab.length());
 }
 
 void Triangle::print() const {
-    std::cout << "A = ";   a_.print();
-    std::cout << ", B = "; b_.print();
-    std::cout << ", C = "; c_.print();
+    std::cout << "A = ";   a.print();
+    std::cout << ", B = "; b.print();
+    std::cout << ", C = "; c.print();
 }
 
 bool Triangle::intersection(const Triangle& other) const {
@@ -48,28 +48,33 @@ bool Triangle::intersection(const Triangle& other) const {
 }
 
 Plane Triangle::get_plane() const {
-    const Vector3D ab = b_ - a_;
-    const Vector3D ac = c_ - a_;
+    assert(this->is_valid());
+    
+    const Vector3D ab = b - a;
+    const Vector3D ac = c - a;
 
     const Vector3D normal = ab.cross(ac);
 
-    return Plane{a_, normal};
+    return Plane{a, normal};
 }
 
 bool Triangle::is_inside(const Vector3D& p) const {
+    assert(this->is_valid());
     assert(p.is_valid());
-    if ( !(this->get_plane()).is_contains(p) ) { return false; }
+    assert(this->get_plane().is_contains(p));
 
-    const Vector3D ab = b_ - a_;
-    const Vector3D bc = c_ - b_;
-    const Vector3D ca = a_ - c_;
-    const Vector3D ap = p - a_;
-    const Vector3D bp = p - b_;
-    const Vector3D cp = p - c_;
+    const Vector3D ab = b - a;
+    const Vector3D bc = c - b;
+    const Vector3D ca = a - c;
+    const Vector3D ap = p - a;
+    const Vector3D bp = p - b;
+    const Vector3D cp = p - c;
+    
+    const Vector3D normal = ab.cross(bc);
 
-    const float side_ab = ( normal_.cross(ab) ).scalar(ap);
-    const float side_bc = ( normal_.cross(bc) ).scalar(bp);
-    const float side_ca = ( normal_.cross(ca) ).scalar(cp);
+    const float side_ab = ( normal.cross(ab) ).scalar(ap);
+    const float side_bc = ( normal.cross(bc) ).scalar(bp);
+    const float side_ca = ( normal.cross(ca) ).scalar(cp);
 
     return (side_ab >= - math::eps && side_bc >= - math::eps && side_ca >= - math::eps) ||
            (side_ab <=   math::eps && side_bc <=   math::eps && side_ca <=   math::eps);
@@ -80,14 +85,21 @@ bool Triangle::is_intersect_2d(const Triangle& other) const {
     assert(other.is_valid());
     if ( !(this->get_plane().is_match(other.get_plane())) ) { return false;}
 
-    const Section* sides1[3] = {&ab_, &bc_, &ac_};
-    const Section* sides2[3] = {&other.ab_, &other.bc_, &other.ac_};
+    const Section ab {a, b};
+    const Section bc {b, c};
+    const Section ca {c, a};
+    const Section other_ab {other.a, other.b};
+    const Section other_bc {other.b, other.c};
+    const Section other_ca {other.c, other.a};
+
+    const Section* sides1[3] = {&ab, &bc, &ca};
+    const Section* sides2[3] = {&other_ab, &other_bc, &other_ca};
     
-    if (is_inside(other.a_) || is_inside(other.b_) || is_inside(other.c_)) {
+    if (is_inside(other.a) || is_inside(other.b) || is_inside(other.c)) {
         return true;
     }
 
-    if (other.is_inside(a_) || other.is_inside(b_) || other.is_inside(c_)) {
+    if (other.is_inside(a) || other.is_inside(b) || other.is_inside(c)) {
         return true;
     }
     
@@ -106,17 +118,28 @@ bool Triangle::is_intersect_3d(const Triangle& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
 
-    const Line intersect_line = get_intersect_line(other);
+    const Section ab {a, b};
+    const Section bc {b, c};
+    const Section ca {c, a};
+    const Section other_ab {other.a, other.b};
+    const Section other_bc {other.b, other.c};
+    const Section other_ca {other.c, other.a};
     
-    const Section* sides1[3] = {&ab_, &bc_, &ac_};
+    const Line intersect_line = get_intersect_line(other);   
+    assert(intersect_line.is_valid());
+    
+    const Section* sides1[3] = {&ab, &bc, &ca};
     std::vector<Vector3D> intersect_points1;
 
     for (size_t i = 0; i < 3; i++) {
-        if (sides1[i]->is_intersect(intersect_line)) {
+        if (sides1[i]->is_belong(intersect_line)) {
+            intersect_points1.push_back(sides1[i]->a_);
+            intersect_points1.push_back(sides1[i]->b_);
+        }
+        else if (sides1[i]->is_intersect(intersect_line)) {         
             Vector3D p = sides1[i]->intersect_point(intersect_line);
-            if (p.is_valid()) {
-                intersect_points1.push_back(p);
-            }
+            assert(p.is_valid());
+            intersect_points1.push_back(p);
         }
     }
 
@@ -124,20 +147,41 @@ bool Triangle::is_intersect_3d(const Triangle& other) const {
         return false;
     }
 
-    const Section* sides2[3] = {&other.ab_, &other.bc_, &other.ac_};
+    const Section* sides2[3] = {&other_ab, &other_bc, &other_ca};
     std::vector<Vector3D> intersect_points2;
 
     for (size_t i = 0; i < 3; i++) {
-        if (sides1[i]->is_intersect(intersect_line)) {
-            Vector3D p = sides2[i]->intersect_point(intersect_line);
-            if (p.is_valid()) {
-                intersect_points2.push_back(p);
-            }
+        if (sides2[i]->is_belong(intersect_line)) {
+            intersect_points2.push_back(sides2[i]->a_);
+            intersect_points2.push_back(sides2[i]->b_);
         }
-    } // TODO maybe template or lambda
+        else if (sides2[i]->is_intersect(intersect_line)) {
+            Vector3D p = sides2[i]->intersect_point(intersect_line);
+            assert(p.is_valid());
+            intersect_points2.push_back(p);
+        }
+    }
 
-    if (intersect_points1.size() < 2) {
+    if (intersect_points2.size() < 2) {
         return false;
+    }
+
+    if (intersect_points1[0].is_match(intersect_points1[1])) {
+        Vector3D p1 = intersect_points1[0];
+
+        if (intersect_points2[0].is_match(intersect_points2[1])) {
+            Vector3D p2 = intersect_points2[0];
+            return p1.is_match(p2);
+        }
+
+        Section s2(intersect_points2[0], intersect_points2[1]);
+        return s2.is_contains(p1);
+    }
+
+    if (intersect_points2[0].is_match(intersect_points2[1])) {
+        Vector3D p2 = intersect_points2[0];
+        Section s1(intersect_points1[0], intersect_points1[1]);
+        return s1.is_contains(p2);
     }
 
     const Section s1{intersect_points1[0], intersect_points1[1]};
@@ -147,12 +191,14 @@ bool Triangle::is_intersect_3d(const Triangle& other) const {
 }
 
 Line Triangle::get_intersect_line(const Triangle& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
+    
     const Plane pl1 = get_plane();
     const Plane pl2 = other.get_plane();
     
-    if (pl1.is_parallel(pl2) || pl1.is_match(pl2)) {
-        return {Vector3D::non_valid(), Vector3D::non_valid()};
-    }
+    assert(!pl1.is_parallel(pl2)); 
+    assert(!pl1.is_match(pl2));
 
     const float D1 = pl1.D();
     const float D2 = pl2.D();
@@ -160,7 +206,7 @@ Line Triangle::get_intersect_line(const Triangle& other) const {
     const Vector3D n1 = pl1.normal();
     const Vector3D n2 = pl2.normal(); 
 
-    const Vector3D dir = normal_.cross(other.normal_);
+    const Vector3D dir = n1.cross(n2);
 
     const Vector3D pl_intersect_p = (n2 * D1 - n1 * D2).cross(n1.cross(n2)) /
                                         math::sqr(( n1.cross(n2) ).length());

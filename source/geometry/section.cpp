@@ -18,60 +18,59 @@ bool Section::is_valid() const {
 }
 
 Line Section::get_line() const {
+    this->is_valid();
     return Line{a_, b_ - a_};
 }
 
-bool Section::is_intersect(const Section& other) const {
+bool Section::is_intersect(const Section& other) const {    
     assert(this->is_valid());
     assert(other.is_valid());
     
     const Line l1 = this->get_line();
     const Line l2 = other.get_line();
+    
+    if (l1.is_match(l2)) {
+        const Vector3D d = b_ - a_;
+        
+        const float abs_x = fabs(d.x);
+        const float abs_y = fabs(d.y);
+        const float abs_z = fabs(d.z);
+
+        Axis axis = (abs_x >= abs_y && abs_x >= abs_z) ? Axis::X :
+                    (abs_y >= abs_z ? Axis::Y : Axis::Z);
+            
+        auto get_1d_coord = [&](const Vector3D& v) {
+            switch (axis) {
+                case Axis::X:
+                    return v.x;
+                case Axis::Y:
+                    return v.y;
+                case Axis::Z:
+                    return v.z;
+                default:
+                    throw std::logic_error("Invalid axis in get_1d_coord()");
+            }
+        };
+        
+        float a1 = get_1d_coord(a_);       float b1 = get_1d_coord(b_);
+        float a2 = get_1d_coord(other.a_); float b2 = get_1d_coord(other.b_);
+
+        if (a1 > b1) { std::swap(a1, b1); }
+        if (a2 > b2) { std::swap(a2, b2); }
+
+        const float left_max  = std::max(a1, a2);
+        const float right_min = std::min(b1, b2);
+
+        return right_min + math::eps >= left_max;
+    }
 
     if (l1.is_intersect(l2)) {
         const Vector3D p = l1.intersect_point(l2);
-        if (!p.is_valid()) { return false; }
-        if ( this->is_contains(p) && other.is_contains(p) ) {
-            return true;
-        }
-    }
+        assert(p.is_valid());
+        return ( this->is_contains(p) && other.is_contains(p) );
+    }    
 
-    if (!l1.is_contains(other.a_)) {
-        return false;
-    }
-
-    const Vector3D d = b_ - a_;
-    
-    const float abs_x = fabs(d.x_);
-    const float abs_y = fabs(d.y_);
-    const float abs_z = fabs(d.z_);
-
-    Axis axis = (abs_x >= abs_y && abs_x >= abs_z) ? Axis::X :
-                (abs_y >= abs_z ? Axis::Y : Axis::Z);
-        
-    auto get_1d_coord = [&](const Vector3D& v) {
-        switch (axis) {
-            case Axis::X:
-                return v.x_;
-            case Axis::Y:
-                return v.y_;
-            case Axis::Z:
-                return v.z_;
-            default:
-                return NAN;
-        }
-    };
-    
-    float a1 = get_1d_coord(a_);       float b1 = get_1d_coord(b_);
-    float a2 = get_1d_coord(other.a_); float_t b2 = get_1d_coord(other.b_);
-
-    if (a1 > b1) { std::swap(a1, b1); }
-    if (a2 > b2) { std::swap(a2, b2); }
-
-    const float left_max  = std::max(a1, a2);
-    const float right_min = std::min(b1, b2);
-
-    return right_min + math::eps >= left_max;
+    return false;
 }
 
 bool Section::is_intersect(const Line& other) const {
@@ -82,22 +81,27 @@ bool Section::is_intersect(const Line& other) const {
 
     if (l1.is_intersect(other)) {
         const Vector3D p = l1.intersect_point(other);
-        if (p.is_valid()) { return false; }
+        assert(p.is_valid());
         return this->is_contains(p);
     }
 
     return false;
 }
 
-Vector3D Section::intersect_point(const Line& other) const {
-    assert(other.is_valid());
+bool Section::is_belong(const Line& line) const {
+    assert(is_valid());
+    assert(line.is_valid());
+    return line.is_contains(a_) && line.is_contains(b_);
+}
+
+Vector3D Section::intersect_point(const Line& line) const {
+    assert(this->is_valid());
+    assert(line.is_valid());
+    assert(this->is_intersect(line));
 
     const Line this_line = this->get_line();
-    if (this_line.is_match(other) || this_line.is_parallel(other)) {
-        return {NAN, NAN, NAN};
-    }
 
-    return this_line.intersect_point(other);
+    return this_line.intersect_point(line);
 }
 
 float Section::length() const {
@@ -105,7 +109,10 @@ float Section::length() const {
 }
 
 bool Section::is_contains(const Vector3D& p) const {
-    if (p.is_valid()) { return false; }
+    this->is_valid();
+    p.is_valid();
+
+    if (!p.is_valid()) { return false; }
     
     const Vector3D ap = p - a_;
     const Vector3D ab = b_ - a_;

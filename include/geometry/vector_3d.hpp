@@ -2,21 +2,20 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <math.h>
 #include <gtest/gtest.h>
 
 namespace geometry {
 
 // TODO template
-class Vector3D {
+struct Vector3D {
 public:   
-    float x_ = NAN;
-    float y_ = NAN;
-    float z_ = NAN;
+    float x = NAN;
+    float y = NAN;
+    float z = NAN;
 
-    Vector3D(float x = NAN, float y = NAN, float z = NAN); 
-
-    static Vector3D zero;
+    Vector3D(float x_ = NAN, float y_ = NAN, float z_ = NAN);
 
     static inline Vector3D non_valid() { return {NAN, NAN, NAN}; }
     
@@ -24,15 +23,16 @@ public:
     bool is_zero()  const;
     bool is_collinear(const Vector3D& other) const;
     bool is_codirected(const Vector3D& other) const;
+    bool is_match(const Vector3D& other) const;
 
     float length() const;
     float scalar(const Vector3D& other) const;
-    // +=, -=, *=, /=
+
     Vector3D operator+ (const Vector3D& other)  const;
     Vector3D operator- (const Vector3D& other)  const;
     Vector3D operator* (const float& scalar) const;
     Vector3D operator/ (const float& scalar) const;
-
+          
     Vector3D cross(const Vector3D& other) const;
     
     void print() const;

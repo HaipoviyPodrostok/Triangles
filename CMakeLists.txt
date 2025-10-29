@@ -5,7 +5,7 @@ enable_testing()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
 
-SET(SRCS 
+SET(SRCS
     source/geometry/vector_3d.cpp
     source/geometry/line.cpp
     source/geometry/section.cpp

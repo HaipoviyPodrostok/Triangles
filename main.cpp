@@ -1,22 +1,13 @@
-#include "geometry/triangle.hpp"
-#include "geometry/vector_3d.hpp"
+#include "geometry/geometry.hpp"
+#include "math/math_utils.hpp"
+
+using namespace geometry;
+constexpr float eps = math::flt_tolerance;
 
 int main() {
-    // float ax = 0; float ay = 0; float az = 0;
-    // float bx = 0; float by = 0; float bz = 0;
-    // float cx = 0; float cy = 0; float cz = 0;    
+    Section s1(Vector3D(0, 0, 0), Vector3D(1, 1, 0));
+    Section s2(Vector3D(0, 1, 0), Vector3D(1, 0, 0));
 
-
-    // std::cin >> ax >> ay >> az >> bx >> by >> bz >> cx >> cy >> cz;
-    
-    // geometry::Vector3D a{ax, ay, az};
-    // geometry::Vector3D b{bx, by, bz};
-    // geometry::Vector3D c{cx, cy, cz};
-
-    // geometry::Triangle abc{a, b, c};
-
-    // abc.print();
+    s1.is_intersect(s2);
     return 0;
 }
-
-//clangd iwyu?

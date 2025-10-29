@@ -5,58 +5,81 @@
 
 namespace geometry {
 
-Vector3D::Vector3D(float x, float y, float z)
-    : x_(x), y_(y), z_(z) { }
+Vector3D::Vector3D(float x_, float y_, float z_)
+    : x(x_), y(y_), z(z_) { }
+
+bool Vector3D::is_valid() const {
+    return std::isfinite(x) && std::isfinite(y) && std::isfinite(z);
+}
 
 Vector3D Vector3D::operator+ (const Vector3D& other) const {
-    return Vector3D{x_ + other.x_, y_ + other.y_, z_ + other.z_};
+    assert(this->is_valid());
+    assert(other.is_valid());
+    return Vector3D{x + other.x, y + other.y, z + other.z};
 }
 
 Vector3D Vector3D::operator- (const Vector3D& other) const {
-    return Vector3D{x_ - other.x_, y_ - other.y_, z_ - other.z_};
+    assert(this->is_valid());
+    assert(other.is_valid());
+    return Vector3D{x - other.x, y - other.y, z - other.z};
 }
 
 Vector3D Vector3D::operator* (const float& scalar) const {
-    return Vector3D{x_ * scalar, y_ * scalar, z_ * scalar};
+    assert(this->is_valid());
+    return Vector3D{x * scalar, y * scalar, z * scalar};
 }
 
 Vector3D Vector3D::operator/ (const float& scalar) const {
+    assert(this->is_valid());
+    assert(!math::is_zero(scalar));
     return *this * (1 / scalar);
 }
 
-bool Vector3D::is_valid() const {
-    return std::isfinite(x_) && std::isfinite(y_) && std::isfinite(z_);
-}
-
 bool Vector3D::is_collinear(const Vector3D& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
     return ( (this->cross(other) ).is_zero() );
 }
 
 bool Vector3D::is_codirected(const Vector3D& other) const {
-    return  (is_collinear(other) && this->scalar(other) >= 0.0f);
+    assert(this->is_valid());
+    assert(other.is_valid());
+    return (is_collinear(other) && this->scalar(other) >= 0.0f);
+}
+
+bool Vector3D::is_match(const Vector3D& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
+    return ((*this - other).is_zero());
 }
 
 bool Vector3D::is_zero() const {
+    assert(this->is_valid());
     return (math::is_zero(length())) ;
 }
 
 float Vector3D::length() const {
-    return (std::sqrtf(x_ * x_ + y_ * y_ + z_ * z_));
+    assert(this->is_valid());
+    return (std::sqrtf(x * x + y * y + z * z));
 }
 
 float Vector3D::scalar(const Vector3D& other) const {
-    return (x_ * other.x_ + y_ * other.y_ + z_ * other.z_);
+    assert(this->is_valid()); 
+    return (x * other.x + y * other.y + z * other.z);
 }
 
-Vector3D Vector3D::cross(const Vector3D& other) const {    
-    float i = (y_ * other.z_) - (z_ * other.y_);
-    float j = (z_ * other.x_) - (x_ * other.z_);
-    float k = (x_ * other.y_) - (y_ * other.x_);
+Vector3D Vector3D::cross(const Vector3D& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
+ 
+    float i = (y * other.z) - (z * other.y);
+    float j = (z * other.x) - (x * other.z);
+    float k = (x * other.y) - (y * other.x);
     
     return Vector3D{i, j, k};
 }
 
 void Vector3D::print() const {
-    std::cout << "(" << x_ << ", " << y_ << ", " << z_ << ")";
+    std::cout << "(" << x << ", " << y << ", " << z << ")";
 }
 } // namespace geometry

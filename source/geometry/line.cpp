@@ -15,24 +15,27 @@ Line::Line(const Vector3D& origin, const Vector3D& dir)
     }
 }
 
-Vector3D Line::origin() const { return origin_; }
-Vector3D Line::dir()    const { return dir_; }
-
 bool Line::is_valid() const {
     return origin_.is_valid() && dir_.is_valid() && !(dir_.is_zero());
 }
 
 bool Line::is_match(const Line& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
     return dir_.is_collinear(other.dir_) &&
            (origin_ - other.origin_).is_collinear(dir_);
 }
 
 bool Line::is_parallel(const Line& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
     return dir_.is_collinear(other.dir_) &&
            !(origin_ - other.origin_).is_collinear(dir_);
 }
 
 bool Line::is_contains(const Vector3D& point) const {
+    assert(this->is_valid());
+    assert(point.is_valid());
     return ((point - origin_).is_collinear(dir_));
 }
 
@@ -43,18 +46,10 @@ bool Line::is_intersect(const Line& other) const {
     if (is_match(other))    { return true;  }
     if (is_parallel(other)) { return false; }
 
-    const Vector3D& p1 = origin_;
-    const Vector3D& d1 = dir_;
-    const Vector3D& p2 = other.origin_;
-    const Vector3D& d2 = other.dir_;
+    const Vector3D v = origin_ - other.origin_;
+    const Vector3D n = dir_.cross(other.dir_);
 
-    const Vector3D v = p2 - p1;
-    const Vector3D n = d1.cross(d2);
-
-    if (n.is_zero()) { return false; }
-    if (math::is_zero(v.scalar(n))) { return true; }
-
-    return false;
+    return math::is_zero(v.scalar(n));
 }
 
 // -- line this:  p1 + t * d1 --
@@ -62,9 +57,8 @@ bool Line::is_intersect(const Line& other) const {
 Vector3D Line::intersect_point(const Line& other) const {
     assert(is_valid());
     assert((other.is_valid()));
-    if (!(this->is_intersect(other)) || this->is_match(other)) {
-        return Vector3D::non_valid(); // FIXME
-    }
+    assert(this->is_intersect(other));
+    assert(!this->is_match(other));
 
     const Vector3D& p1 = origin_;
     const Vector3D& d1 = dir_;
@@ -72,7 +66,7 @@ Vector3D Line::intersect_point(const Line& other) const {
     const Vector3D& d2 = other.dir_;
 
     const Vector3D n = d1.cross(d2);
-    if (n.is_zero()) { return Vector3D::non_valid(); }
+    assert(!n.is_zero());
     const float n_len_squared = n.length() * n.length();
 
     const float t = ( (p2 - p1).cross(d2) ).scalar(n) / n_len_squared;
@@ -85,7 +79,7 @@ Vector3D Line::intersect_point(const Line& other) const {
         return a;
     }
 
-    return Vector3D::non_valid(); //NOTE or nullopt
+    return Vector3D::non_valid();
 }
 
 void Line::print() const {

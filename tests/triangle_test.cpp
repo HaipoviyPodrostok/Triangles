@@ -13,39 +13,6 @@ Triangle make_triangle_xy() {
                     Vector3D(1.0f, 0, 0),
                     Vector3D(0, 1.0f, 0));
 }
-
-// === ТЕСТЫ ДЛЯ is_inside ===
-TEST(TriangleIsInside, InsidePoint) {
-    Triangle t = make_triangle_xy();
-    EXPECT_TRUE(t.is_inside(Vector3D(0.25, 0.25, 0)));
-}
-
-TEST(TriangleIsInside, OnVertex) {
-    Triangle t = make_triangle_xy();
-    EXPECT_TRUE(t.is_inside(Vector3D(0, 0, 0)));
-    EXPECT_TRUE(t.is_inside(Vector3D(1, 0, 0)));
-    EXPECT_TRUE(t.is_inside(Vector3D(0, 1, 0)));
-}
-
-TEST(TriangleIsInside, OnEdge) {
-    Triangle t = make_triangle_xy();
-    EXPECT_TRUE(t.is_inside(Vector3D(0.5, 0, 0)));
-    EXPECT_TRUE(t.is_inside(Vector3D(0.5, 0.5, 0)));
-    EXPECT_TRUE(t.is_inside(Vector3D(0, 0.5, 0)));
-}
-
-TEST(TriangleIsInside, OutsidePoint) {
-    Triangle t = make_triangle_xy();
-    EXPECT_FALSE(t.is_inside(Vector3D(1.0, 1.0, 0)));
-    EXPECT_FALSE(t.is_inside(Vector3D(-0.1, 0.1, 0)));
-}
-
-TEST(TriangleIsInside, AbovePlaneShouldFail) {
-    Triangle t = make_triangle_xy();
-    EXPECT_FALSE(t.is_inside(Vector3D(0.25, 0.25, 0.01)));
-    EXPECT_FALSE(t.is_inside(Vector3D(0.25, 0.25, -0.01)));
-}
-
 // === ТЕСТЫ ДЛЯ intersection() ===
 TEST(TriangleIntersection, CoplanarFullOverlap) {
     Triangle t1 = make_triangle_xy();
@@ -151,6 +118,26 @@ TEST(Triangle3DTest, CoplanarDisjoint) {
     Triangle t2(Vector3D(2,0,0), Vector3D(3,0,0), Vector3D(2,1,0));
     EXPECT_FALSE(t1.intersection(t2));
 }
+// === ТРЕУГОЛЬНИКИ ПЕРЕСЕКАЮТСЯ ПО ОТРЕЗКУ ===
+TEST(Triangle3DTest, IntersectBySegment) {
+    // Первый треугольник в плоскости z = 0
+    Triangle t1(
+        Vector3D(0, 0, 0),
+        Vector3D(2, 0, 0),
+        Vector3D(0, 2, 0)
+    );
+
+    // Второй треугольник — вертикальный, в плоскости x = 1
+    Triangle t2(
+        Vector3D(1, -1, -1),
+        Vector3D(1, 1, -1),
+        Vector3D(1, 0, 1)
+    );
+
+    // Линия пересечения плоскостей: x = 1, z = 0
+    // Оба треугольника пересекаются вдоль отрезка (1,0,0) — (1,1,0)
+    EXPECT_TRUE(t1.intersection(t2));
+}
 
 // === НЕ КОПЛАНАРНЫЕ, ПЕРЕСЕКАЮТСЯ ПОД УГЛОМ ===
 TEST(Triangle3DTest, IntersectAtLine) {
@@ -190,5 +177,128 @@ TEST(Triangle3DTest, ContainedButDifferentPlanes) {
 TEST(Triangle3DTest, CoplanarOneInsideAnother) {
     Triangle t1(Vector3D(0,0,0), Vector3D(4,0,0), Vector3D(0,4,0));
     Triangle t2(Vector3D(1,1,0), Vector3D(2,1,0), Vector3D(1,2,0));
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+// =========================================================
+// === НАБОР ВСЕХ СЛУЧАЕВ ПЕРЕСЕЧЕНИЙ ТРЕУГОЛЬНИКОВ ========
+// =========================================================
+
+// 1. Полное совпадение
+TEST(Triangle3DTest, IdenticalTriangles) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});
+    Triangle t2({0,0,0}, {1,0,0}, {0,1,0});
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+// 2. Копланарные, но не пересекаются
+TEST(Triangle3DTest, CoplanarSeparate) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});
+    Triangle t2({2,0,0}, {3,0,0}, {2,1,0});
+    EXPECT_FALSE(t1.intersection(t2));
+}
+
+// 3. Копланарные, касаются в одной вершине
+TEST(Triangle3DTest, CoplanarTouchAtVertex) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});
+    Triangle t2({1,0,0}, {2,0,0}, {1,1,0});
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+// 4. Копланарные, имеют общую сторону
+TEST(Triangle3DTest, CoplanarShareEdge) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});
+    Triangle t2({1,0,0}, {1,1,0}, {0,1,0});
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+// 5. Пересекаются под углом (z=0 и x=1)
+TEST(Triangle3DTest, IntersectAtLine2) {
+    Triangle t1({0,0,0}, {2,0,0}, {0,2,0});          // плоскость z = 0
+    Triangle t2({1,-1,-1}, {1,1,1}, {1,1,-1});       // плоскость x = 1
+    EXPECT_TRUE(t1.intersection(t2)); // пересечение по линии x=1, z=0
+}
+
+// 6. Касание по одной точке (вершина–плоскость)
+TEST(Triangle3DTest, TouchAtSingleVertex) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});          // z=0
+    Triangle t2({0,0,0}, {0,1,-1}, {1,0,-1});        // пересекается только в (0,0,0)
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+// 7. Касание ребро–ребро (одна точка)
+TEST(Triangle3DTest, EdgeEdgeContact) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});
+    Triangle t2({1,0,0}, {1,1,1}, {1,-1,1});
+    EXPECT_TRUE(t1.intersection(t2)); // только (1,0,0)
+}
+
+// 8. Один треугольник полностью лежит внутри другого (копланарно)
+TEST(Triangle3DTest, OneInsideAnotherCoplanar) {
+    Triangle t1({0,0,0}, {4,0,0}, {0,4,0});
+    Triangle t2({1,1,0}, {2,1,0}, {1,2,0});
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+// 9. Один треугольник над другим (параллельные плоскости)
+TEST(Triangle3DTest, ParallelNoIntersection2) {
+    Triangle t1({0,0,0}, {2,0,0}, {0,2,0});
+    Triangle t2({0,0,1}, {2,0,1}, {0,2,1});
+    EXPECT_FALSE(t1.intersection(t2));
+}
+
+// 10. Почти параллельные (угол ≈ 180°, пересечения нет)
+TEST(Triangle3DTest, AlmostParallel) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});
+    Triangle t2({0,0,1e-5f}, {1,0,1e-5f}, {0,1,1e-5f});
+    EXPECT_FALSE(t1.intersection(t2));
+}
+
+// 11. Пересекаются ребром другого (отрезок–отрезок)
+TEST(Triangle3DTest, EdgeCrossing) {
+    Triangle t1({0,0,0}, {2,0,0}, {0,2,0});
+    Triangle t2({1,-1,-1}, {1,1,1}, {1,1,-1});
+    EXPECT_TRUE(t1.intersection(t2)); // отрезок по линии x=1,z=0
+}
+
+// 14. Пересекаются по внутренней линии, не касаясь вершин
+TEST(Triangle3DTest, InnerLineCross) {
+    Triangle t1({0,0,0}, {3,0,0}, {0,3,0});
+    Triangle t2({1,1,-1}, {1,1,1}, {1.5,0.5,0});
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+// 16. Пересекаются одной вершиной, но вне сторон
+TEST(Triangle3DTest, SingleVertexOnPlane) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});
+    Triangle t2({0,0,0}, {1,-1,-1}, {1,1,1});
+    EXPECT_TRUE(t1.intersection(t2)); // в точке (0,0,0)
+}
+
+// 17. Полное пересечение по линии, треугольники не копланарны
+TEST(Triangle3DTest, SkewPlanesLineIntersection) {
+    Triangle t1({0,0,0}, {2,0,0}, {0,2,0});
+    Triangle t2({0,0,1}, {2,2,-1}, {2,0,1});
+    EXPECT_TRUE(t1.intersection(t2));
+}
+
+// 18. Треугольники скрещиваются (не копланарны, не пересекаются)
+TEST(Triangle3DTest, SkewNoIntersection) {
+    Triangle t1({0,0,0}, {2,0,0}, {0,2,0});
+    Triangle t2({1,1,1}, {2,1,1}, {1,2,1});
+    EXPECT_FALSE(t1.intersection(t2));
+}
+
+// 19. Один внутри другого, но в параллельной плоскости (без касания)
+TEST(Triangle3DTest, InsideButParallel) {
+    Triangle t1({0,0,0}, {4,0,0}, {0,4,0});
+    Triangle t2({1,1,1}, {2,1,1}, {1,2,1});
+    EXPECT_FALSE(t1.intersection(t2));
+}
+
+// 20. Общая сторона, но нормали противоположны (обратный порядок вершин)
+TEST(Triangle3DTest, SharedEdgeOppositeNormal) {
+    Triangle t1({0,0,0}, {1,0,0}, {0,1,0});
+    Triangle t2({1,0,0}, {0,1,0}, {1,1,0}); // обратный порядок
     EXPECT_TRUE(t1.intersection(t2));
 }

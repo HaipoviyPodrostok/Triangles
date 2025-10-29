@@ -7,6 +7,9 @@ namespace geometry {
 // -- line -- (r = origin + t * dir)
 class Line {
 public:
+    Vector3D origin_;
+    Vector3D dir_;
+
     Line(const Vector3D& origin, const Vector3D& dir);
 
     Vector3D origin() const;
@@ -20,10 +23,5 @@ public:
 
     Vector3D intersect_point(const Line& other) const;
     void print() const;
-    // Vector3D{.x = 1, .y = 2, .z = 3};
-
-private:
-    Vector3D origin_;
-    Vector3D dir_;
 };
 } // namespace geometry
