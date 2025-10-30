@@ -26,6 +26,6 @@ struct Triangle {
     bool is_intersect_2d(const Triangle& other) const;
     bool is_inside(const Vector3D& p) const;
     bool is_intersect_3d(const Triangle& other) const;
-    Vector3D find_centre() const;
+    Vector3D get_centre() const;
 };
 } // namespace geometry

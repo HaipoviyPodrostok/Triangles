@@ -148,18 +148,18 @@ TEST(LineTest, IntersectionPointIsCorrect) {
     Line l1(Vector3D(0, 0, 0), Vector3D(1, 1, 0));
     Line l2(Vector3D(1, 0, 0), Vector3D(-1, 1, 0));
     Vector3D p = l1.intersect_point(l2);
-    EXPECT_NEAR(p.x(), 0.5, 1e-6);
-    EXPECT_NEAR(p.y(), 0.5, 1e-6);
-    EXPECT_NEAR(p.z(), 0.0, 1e-6);
+    EXPECT_NEAR(p.x, 0.5, 1e-6);
+    EXPECT_NEAR(p.y, 0.5, 1e-6);
+    EXPECT_NEAR(p.z, 0.0, 1e-6);
 }
 
 TEST(LineTest, NonIntersectingLinesReturnNaN) {
     Line l1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
     Line l2(Vector3D(0, 1, 0), Vector3D(0, 0, 1));
     Vector3D p = l1.intersect_point(l2);
-    EXPECT_TRUE(std::isnan(p.x()));
-    EXPECT_TRUE(std::isnan(p.y()));
-    EXPECT_TRUE(std::isnan(p.z()));
+    EXPECT_TRUE(std::isnan(p.x));
+    EXPECT_TRUE(std::isnan(p.y));
+    EXPECT_TRUE(std::isnan(p.z));
 }
 
 // =============== EDGE CASES ===============
@@ -169,15 +169,15 @@ TEST(LineTest, HandlesLargeNumbers) {
     EXPECT_TRUE(l1.is_intersect(l2));
     Vector3D p = l1.intersect_point(l2);
     EXPECT_TRUE(p.is_valid());
-    EXPECT_FALSE(std::isnan(p.x()));
+    EXPECT_FALSE(std::isnan(p.x));
 }
 
 TEST(LineTest, HandlesNegativeCoordinates) {
     Line l1(Vector3D(-10, -10, 0), Vector3D(1, 1, 0));
     Line l2(Vector3D(-9, -11, 0), Vector3D(1, -1, 0));
     Vector3D p = l1.intersect_point(l2);
-    EXPECT_NEAR(p.x(), -10.0, 1e-6);
-    EXPECT_NEAR(p.y(), -10.0, 1e-6);
+    EXPECT_NEAR(p.x, -10.0, 1e-6);
+    EXPECT_NEAR(p.y, -10.0, 1e-6);
 }
 
 TEST(LineTest, IntersectionWithSameLineGivesValidPoint) {

@@ -9,7 +9,10 @@
 
 namespace acceleration {
 
-AABB::AABB(const geometry::Triangle& tri)
+AABB::AABB(const geometry::Vector3D min_, const geometry::Vector3D max_)
+    : min(min_), max(max_) { }
+
+AABB::AABB(const geometry::Triangle tri)
     : min{std::fmin( std::fmin( tri.a.x, tri.b.x ), tri.c.x ),
           std::fmin( std::fmin( tri.a.y, tri.b.y ), tri.c.y ),
           std::fmin( std::fmin( tri.a.z, tri.b.z ), tri.c.z ) }, 

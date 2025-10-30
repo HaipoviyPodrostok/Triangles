@@ -11,7 +11,8 @@ struct AABB {
     geometry::Vector3D min;
     geometry::Vector3D max;
 
-    AABB(const geometry::Triangle& tri);
+    AABB(const geometry::Vector3D min_, const geometry::Vector3D max_);
+    AABB(const geometry::Triangle tri);
     
     bool is_valid() const;
     bool is_intersect(const AABB& other) const;

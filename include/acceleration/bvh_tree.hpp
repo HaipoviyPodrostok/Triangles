@@ -21,8 +21,8 @@ struct BVHTree {
 
     BVHTree(const std::vector<geometry::Triangle>& input);
 
-    void partition(const BVHNode& node);
+    using TrianglesIt = typename std::vector<geometry::Triangle>::iterator;
+
+    void partition(const BVHNode& node, TrianglesIt start, TrianglesIt end);
 };
-
-
-} // namespace acceleration30-08-2006-$$
+} // namespace acceleration
