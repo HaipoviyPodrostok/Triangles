@@ -11,7 +11,9 @@
 namespace geometry {
 
 Triangle::Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c)
-    : a(a), b(b), c(c) {};
+    : a(a), b(b), c(c) {
+        centroid = get_centre();
+    };
 
 bool Triangle::is_valid() const {
     const Section ab {a, b};

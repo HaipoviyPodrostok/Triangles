@@ -1,16 +1,26 @@
 #pragma once
 #include "acceleration/AABB.hpp"
 #include "geometry/triangle.hpp"
+#include "math/math_utils.hpp"
+#include <cstddef>
 
 namespace acceleration {
 
+inline constexpr size_t max_leaf_capacity  = 4;
+inline constexpr size_t tree_max_depth = 64; 
+
 struct BVHNode {
     AABB box;
-    int left   = -1;
-    int right  = -1;
-    int tri_cnt = 0;
+   
+    int left  = -1;
+    int right = -1;
+   
+    size_t first  = 0;
+    size_t n_objs = 0;
+   
+    bool is_leaf = false;
 
-    BVHNode(const AABB& input_box);
+    BVHNode(const AABB& box_, const size_t first_, const size_t n_objs_);
 };
     
 struct BVHTree {
@@ -21,8 +31,9 @@ struct BVHTree {
 
     BVHTree(const std::vector<geometry::Triangle>& input);
 
-    using TrianglesIt = typename std::vector<geometry::Triangle>::iterator;
+    void partition(const int idx);
+    void sort_triangles_by_centroids(const BVHNode& node, const math::Axis wildest_axis, 
+                                     const size_t mid_idx);
 
-    void partition(const BVHNode& node, TrianglesIt start, TrianglesIt end);
 };
 } // namespace acceleration

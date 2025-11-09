@@ -14,7 +14,9 @@ struct Triangle {
     Vector3D a;
     Vector3D b;
     Vector3D c;
-        
+    
+    Vector3D centroid;
+    
     Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c);
     
     Plane get_plane() const;
