@@ -11,6 +11,8 @@ SET(SRCS
     source/geometry/section.cpp
     source/geometry/plane.cpp
     source/geometry/triangle.cpp
+    source/acceleration/AABB.cpp
+    source/acceleration/bvh_tree.cpp
 )
 
 add_library(triangles_lib STATIC ${SRCS})

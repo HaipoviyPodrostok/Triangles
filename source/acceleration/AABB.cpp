@@ -53,9 +53,9 @@ void AABB::expand(const geometry::Triangle& tri) {
         min.x = fmin(min.x, tri_points[i].x);
         min.y = fmin(min.y, tri_points[i].y);
         min.z = fmin(min.z, tri_points[i].z);
-        min.x = fmax(max.x, tri_points[i].x);
-        min.y = fmax(max.y, tri_points[i].y);
-        min.z = fmax(max.z, tri_points[i].z);
+        max.x = fmax(max.x, tri_points[i].x);
+        max.y = fmax(max.y, tri_points[i].y);
+        max.z = fmax(max.z, tri_points[i].z);
     }
 }
 
@@ -66,8 +66,27 @@ void AABB::merge(const AABB& other) {
     min.x = fmin(min.x, other.min.x);
     min.y = fmin(min.y, other.min.y);
     min.z = fmin(min.z, other.min.z);
-    min.x = fmax(max.x, other.max.x);
-    min.y = fmax(max.y, other.max.y);
-    min.z = fmax(max.z, other.max.z);
+    max.x = fmax(max.x, other.max.x);
+    max.y = fmax(max.y, other.max.y);
+    max.z = fmax(max.z, other.max.z);
 }
+
+AABB merge(AABB& a, AABB& b) {
+    assert(a.is_valid() && b.is_valid());
+    a.merge(b);
+    return a;
+}
+
+bool AABB::is_inside(const AABB& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
+
+    return min.x < other.min.x + math::eps &&
+           min.y < other.min.y + math::eps &&
+           min.z < other.min.z + math::eps &&
+           max.x < other.max.x + math::eps &&
+           max.y < other.max.y + math::eps &&    
+           max.z < other.max.z + math::eps;
+}
+
 } // namespace acceleration
