@@ -39,7 +39,7 @@ void BVHNode::init_internal(const AABB& box_, const int left_idx_, const int rig
     right_idx = right_idx_;
 }
 
-BVHTree::BVHTree(const std::vector<geometry::Triangle>& input) 
+BVHTree::BVHTree(std::vector<geometry::Triangle>& input) 
     : triangles(input) {
 
     if (input.size() < 2) {
@@ -48,6 +48,8 @@ BVHTree::BVHTree(const std::vector<geometry::Triangle>& input)
 
     build_node(0, input.size(), 0);
 }
+
+
 
 bool BVHTree::is_valid() const { return root >= 0; }
 
@@ -135,16 +137,36 @@ int BVHTree::build_node(const size_t start, const size_t n_objs, const size_t de
     return node_idx;
 }
 
+#ifdef ENABLE_BVH_DEBUG
 void BVHTree::dump() {
     if (root == -1) {
         throw std::invalid_argument("tree is invalid");
     }
 
+    std::ofstream dump_file = make_dump_file();
+    
+    
+
 }
 
-std::string BVHTree::make_dump_file_name() {
+void BVHTree::dump_recursion(const int node_idx) {
+    assert (node_idx >= 0);
+
+    const BVHNode& node = nodes[node_idx];
+
+    if (node.left_idx >= 0) {
+        dump_recursion(node.left_idx);
+    }
+    if (node.right_idx >= 0) {
+        dump_recursion(node.right_idx);
+    }
+
+    node.print_node();
+}
+
+std::ofstream BVHTree::make_dump_file() {
     namespace fs = std::filesystem;
-    fs::path dump_folder_path = dump_folder_name;
+    fs::path dump_folder_path = default_dump_folder;
     if (!fs::exists(dump_folder_path)) {
         fs::create_directories(dump_folder_path);
     }
@@ -167,10 +189,14 @@ std::string BVHTree::make_dump_file_name() {
 
     dump_call_cnt++;
     
-    return std::string("bvh_tree_dump_") +
-           std::to_string(last_launch_num) + "_" +
-           std::to_string(dump_call_cnt) + ".dot";
+    std::string dump_file_name = std::string("bvh_tree_dump_") +
+                                std::to_string(last_launch_num) + "_" +
+                                std::to_string(dump_call_cnt) + ".dot";
+
+    std::ofstream dump_file{dump_file_name};
+    return dump_file;
 }
+#endif // ENABLE_BVH_DEBUG
 
 
 } // namespace acceleration

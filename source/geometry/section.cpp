@@ -79,13 +79,20 @@ bool Section::is_intersect(const Line& other) const {
     
     const Line l1 = this->get_line();
 
-    if (l1.is_intersect(other)) {
-        const Vector3D p = l1.intersect_point(other);
-        assert(p.is_valid());
-        return this->is_contains(p);
+    if (l1.is_match(other)) {
+        return true;
     }
 
-    return false;
+    if (!l1.is_intersect(other)) {
+        return false;
+    }
+
+    const Vector3D p = l1.intersect_point(other);
+    if (!p.is_valid()) {
+        return false;
+    }
+
+    return this->is_contains(p);
 }
 
 bool Section::is_belong(const Line& line) const {
@@ -100,6 +107,10 @@ Vector3D Section::intersect_point(const Line& line) const {
     assert(this->is_intersect(line));
 
     const Line this_line = this->get_line();
+
+    if (this_line.is_match(line)) {
+        return a_;
+    }
 
     return this_line.intersect_point(line);
 }

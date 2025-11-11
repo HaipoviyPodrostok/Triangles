@@ -9,7 +9,6 @@ namespace geometry {
 
 // TODO template
 struct Vector3D {
-public:   
     float x;
     float y;
     float z;

@@ -6,13 +6,12 @@ enable_testing()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
 
 SET(SRCS
+    main.cpp
     source/geometry/vector_3d.cpp
     source/geometry/line.cpp
     source/geometry/section.cpp
     source/geometry/plane.cpp
     source/geometry/triangle.cpp
-    source/acceleration/AABB.cpp
-    source/acceleration/bvh_tree.cpp
 )
 
 add_library(triangles_lib STATIC ${SRCS})
