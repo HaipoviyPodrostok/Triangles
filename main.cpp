@@ -5,6 +5,7 @@
 #include "math/math_utils.hpp"
 #include <cstddef>
 #include <fstream>
+#include <ostream>
 #include <vector>
 
 using namespace geometry;
@@ -28,7 +29,7 @@ int main() {
         for (size_t j = 0; j < 3; ++j) {
             float coords[3] = {};
             for (size_t k = 0; k < 3; ++k) {
-                file >> coords[j];
+                file >> coords[k];
             }
             points.emplace_back(Vector3D{coords[0], coords[1], coords[2]});
         }
@@ -45,6 +46,6 @@ int main() {
         }
     }
 
-    std::cout << intersect_tri_cnt;
+    std::cout << intersect_tri_cnt << std::endl;
     return 0;
 }
