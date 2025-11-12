@@ -11,7 +11,7 @@ TEST(PlaneTest, ConstructorComputesDProperly) {
     Plane p(point, normal);
 
     // Уравнение: 0*x + 0*y + 1*z + D = 0 → D = -z = -3
-    EXPECT_NEAR(p.D(), 3.0f, 1e-6);
+    EXPECT_NEAR(p.D_, 3.0f, 1e-6);
 }
 
 // ========================= Match =========================
@@ -43,10 +43,6 @@ TEST(PlaneTest, ParallelFailsForSkewedPlanes) {
 }
 
 // ========================= Validity =========================
-TEST(PlaneTest, IsValidReturnsFalseForZeroNormal) {
-    Plane p({1,2,3}, {0,0,0});
-    EXPECT_FALSE(p.is_valid());  // нулевая нормаль -> невалидно
-}
 TEST(PlaneTest, IsValidReturnsTrueForNonZeroNormal) {
     Plane p({1,2,3}, {1,0,0});
     EXPECT_TRUE(p.is_valid());   // ненулевая нормаль -> валидно
@@ -68,7 +64,7 @@ TEST(PlaneTest, ConstructorWithNegativeNormalGivesSamePlaneOppositeD) {
 
     // норма разная по направлению, но D тоже меняется знаком
     EXPECT_TRUE(p1.normal().is_collinear(p2.normal()));
-    EXPECT_NEAR(p1.D(), -p2.D(), 1e-6);
+    EXPECT_NEAR(p1.D_, -p2.D_, 1e-6);
 }
 
 // ============================================================
@@ -124,13 +120,13 @@ TEST(PlaneTest, AlmostParallelPlanesAreStillParallelWithinEpsilon) {
 TEST(PlaneTest, DIncreasesAlongNormalDirection) {
     Plane p1(Vector3D(0, 0, 1), Vector3D(0, 0, 1));
     Plane p2(Vector3D(0, 0, 5), Vector3D(0, 0, 1));
-    EXPECT_LT(p1.D(), p2.D());
+    EXPECT_LT(p1.D_, p2.D_);
 }
 
 TEST(PlaneTest, DChangesSignWithNormalInversion) {
     Plane p(Vector3D(0, 0, 5), Vector3D(0, 0, 1));
     Plane q(Vector3D(0, 0, 5), Vector3D(0, 0, -1));
-    EXPECT_NEAR(p.D(), -q.D(), 1e-6);
+    EXPECT_NEAR(p.D_, -q.D_, 1e-6);
 }
 
 // ============================================================

@@ -2,6 +2,7 @@
 #include "math/math_utils.hpp"
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 
 namespace geometry {
 
@@ -24,16 +25,33 @@ Vector3D Vector3D::operator- (const Vector3D& other) const {
     return Vector3D{x - other.x, y - other.y, z - other.z};
 }
 
-Vector3D Vector3D::operator* (const float& scalar) const {
+Vector3D Vector3D::operator* (float scalar) const {
     assert(this->is_valid());
     return Vector3D{x * scalar, y * scalar, z * scalar};
 }
 
-Vector3D Vector3D::operator/ (const float& scalar) const {
+Vector3D Vector3D::operator/ (float scalar) const {
     assert(this->is_valid());
     assert(!math::is_zero(scalar));
     return *this * (1 / scalar);
 }
+
+float& Vector3D::operator[] (size_t idx) {
+    assert(this->is_valid());
+    if (idx == 0) { return x; };
+    if (idx == 1) { return y; };
+    if (idx == 2) { return z; };
+    throw std::out_of_range("Vector3D index out of range");;
+}
+
+const float& Vector3D::operator[] (size_t idx) const {
+    assert(this->is_valid());
+    if (idx == 0) { return x; };
+    if (idx == 1) { return y; };
+    if (idx == 2) { return z; };
+    throw std::out_of_range("Vector3D index out of range");;
+}
+
 
 bool Vector3D::is_collinear(const Vector3D& other) const {
     assert(this->is_valid());

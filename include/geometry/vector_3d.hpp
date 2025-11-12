@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <math.h>
 #include <gtest/gtest.h>
 
@@ -17,19 +18,21 @@ struct Vector3D {
 
     static inline Vector3D non_valid() { return {NAN, NAN, NAN}; }
     
-    bool is_valid() const;
-    bool is_zero()  const;
-    bool is_collinear(const Vector3D& other) const;
+    bool is_valid     ()                      const;
+    bool is_zero      ()                      const;
+    bool is_collinear (const Vector3D& other) const;
     bool is_codirected(const Vector3D& other) const;
-    bool is_match(const Vector3D& other) const;
+    bool is_match     (const Vector3D& other) const;
 
     float length() const;
     float scalar(const Vector3D& other) const;
 
-    Vector3D operator+ (const Vector3D& other)  const;
-    Vector3D operator- (const Vector3D& other)  const;
-    Vector3D operator* (const float& scalar) const;
-    Vector3D operator/ (const float& scalar) const;
+    Vector3D     operator+  (const Vector3D& other) const;
+    Vector3D     operator-  (const Vector3D& other) const;
+    Vector3D     operator*  (float scalar)          const;
+    Vector3D     operator/  (float scalar)          const;
+    float&       operator[] (size_t idx)                 ;
+    const float& operator[] (size_t idx)            const; 
           
     Vector3D cross(const Vector3D& other) const;
     

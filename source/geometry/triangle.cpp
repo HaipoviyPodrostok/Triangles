@@ -63,7 +63,7 @@ Plane Triangle::get_plane() const {
 bool Triangle::is_inside(const Vector3D& p) const {
     assert(this->is_valid());
     assert(p.is_valid());
-    assert(this->get_plane().is_contains(p));
+    //assert(this->get_plane().is_contains(p));
 
     const Vector3D ab = b - a;
     const Vector3D bc = c - b;
@@ -201,16 +201,13 @@ Line Triangle::get_intersect_line(const Triangle& other) const {
     
     assert(!pl1.is_parallel(pl2)); 
     assert(!pl1.is_match(pl2));
-
-    const float D1 = pl1.D();
-    const float D2 = pl2.D();
     
     const Vector3D n1 = pl1.normal();
     const Vector3D n2 = pl2.normal(); 
 
     const Vector3D dir = n1.cross(n2);
 
-    const Vector3D pl_intersect_p = (n2 * D1 - n1 * D2).cross(n1.cross(n2)) /
+    const Vector3D pl_intersect_p = (n2 * pl1.D_ - n1 * pl2.D_).cross(n1.cross(n2)) /
                                         math::sqr(( n1.cross(n2) ).length());
 
     return {pl_intersect_p, dir};

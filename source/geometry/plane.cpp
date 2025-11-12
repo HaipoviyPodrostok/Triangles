@@ -6,7 +6,11 @@
 namespace geometry {
     
 Plane::Plane(const Vector3D& point, const Vector3D& n)
-: r_(point), normal_(n), D_(n.scalar(point)) { }
+    : r_(point) {
+        assert(point.is_valid() && n.is_valid() && !n.is_zero());
+        normal_ = n / n.length();
+        D_ = normal_.scalar(point);
+}
 
 bool Plane::is_valid() const {
     return (r_.is_valid()      &&
@@ -16,20 +20,20 @@ bool Plane::is_valid() const {
 
 Vector3D Plane::normal() const { return normal_; }
 
-float Plane::D() const { return D_; }
+float Plane::get_distance(const Plane& other) const {
+    float sign = (normal_.is_codirected(other.normal_)) ? 1.0f : -1.0f;
+    return std::fabs(D_ - sign * other.D_);
+}
 
 bool Plane::is_match(const Plane& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
-    
+
     if (!normal_.is_collinear(other.normal_)) {
         return false;
     }
 
-    float sign = (normal_.is_codirected(other.normal_)) ? 1.0f : -1.0f;
-    float distance = std::fabs(D_ - sign * other.D_) / normal_.length();
-    
-    return distance <= math::eps;
+    return math::is_zero(get_distance(other));
 }
 
 bool Plane::is_parallel(const Plane& other) const {
@@ -40,10 +44,7 @@ bool Plane::is_parallel(const Plane& other) const {
         return false;
     }
 
-    float sign = (normal_.is_codirected(other.normal_)) ? 1.0f : -1.0f;
-    float distance = std::fabs(D_ - sign * other.D_) / normal_.length();
-    
-    return distance >= math::eps;
+    return !math::is_zero(get_distance(other));
 }
 
 bool Plane::is_contains(const Vector3D& p) const {

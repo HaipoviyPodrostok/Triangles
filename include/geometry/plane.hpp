@@ -15,7 +15,7 @@ public:
 
     bool is_valid() const;
     Vector3D normal() const;
-    float D() const;
+    float get_distance(const Plane& other) const;
     bool is_match(const Plane& other) const;
     bool is_parallel(const Plane& other) const;
     bool is_contains(const Vector3D& p) const;

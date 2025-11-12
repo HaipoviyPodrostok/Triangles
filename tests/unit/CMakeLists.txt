@@ -3,7 +3,8 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/googletest
 
 add_executable(geometry_test.x
     triangle_test.cpp
-    triangle_intersection_e2e_test.cpp
+    plane_test.cpp
+    section_test.cpp
 )
 
 target_include_directories(geometry_test.x
@@ -18,4 +19,7 @@ target_link_libraries(geometry_test.x
 )
 
 include(GoogleTest)
-gtest_discover_tests(geometry_test.x)
+gtest_discover_tests(geometry_test.x
+    PROPERTIES LABELS "unit"
+    TEST_PREFIX "unit:"
+)

@@ -6,7 +6,6 @@ enable_testing()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
 
 SET(SRCS
-    main.cpp
     source/geometry/vector_3d.cpp
     source/geometry/line.cpp
     source/geometry/section.cpp
@@ -22,7 +21,16 @@ target_link_libraries(triangles.x PRIVATE triangles_lib)
 
 include(CTest)
 if (BUILD_TESTING)
-    add_subdirectory(tests)
+    add_subdirectory(tests/unit)
+
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME end2end
+             COMMAND ${Python3_EXECUTABLE}
+                     ${CMAKE_SOURCE_DIR}/tests/end2end/run_e2e_test.py
+                     $<TARGET_FILE:triangles.x>)
+    set_tests_properties(end2end PROPERTIES LABELS "e2e"
+                         TEST_PREFIX "unit:"
+    )
 endif()
 
 #file(GLOB testfiles "${CMAKE_SOURCE_DIR}/tests/*.in")

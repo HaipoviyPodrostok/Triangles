@@ -1,4 +1,6 @@
 #include <cassert>
+#include <cmath>
+#include <cstddef>
 
 #include "geometry/triangle.hpp"
 #include "geometry/vector_3d.hpp"
@@ -50,12 +52,10 @@ void AABB::expand(const geometry::Triangle& tri) {
     const geometry::Vector3D tri_points[3] = {tri.a, tri.b, tri.c};
 
     for (size_t i = 0; i < 3; ++i) {
-        min.x = fmin(min.x, tri_points[i].x);
-        min.y = fmin(min.y, tri_points[i].y);
-        min.z = fmin(min.z, tri_points[i].z);
-        max.x = fmax(max.x, tri_points[i].x);
-        max.y = fmax(max.y, tri_points[i].y);
-        max.z = fmax(max.z, tri_points[i].z);
+        for (size_t j = 0; j < 3; ++j) {
+            min[j] = fmin(min[j], tri_points[i][j]);
+            max[j] = fmax(max[j], tri_points[i][j]);
+        }        
     }
 }
 
@@ -63,12 +63,10 @@ void AABB::merge(const AABB& other) {
     assert(this->is_valid());
     assert(other.is_valid());
 
-    min.x = fmin(min.x, other.min.x);
-    min.y = fmin(min.y, other.min.y);
-    min.z = fmin(min.z, other.min.z);
-    max.x = fmax(max.x, other.max.x);
-    max.y = fmax(max.y, other.max.y);
-    max.z = fmax(max.z, other.max.z);
+    for (size_t i = 0; i < 3; ++i) {
+        min[i] = fmin(min[i], other.min[i]);
+        max[i] = fmax(max[i], other.max[i]);
+    }
 }
 
 AABB merge(AABB& a, AABB& b) {
@@ -80,7 +78,7 @@ AABB merge(AABB& a, AABB& b) {
 bool AABB::is_inside(const AABB& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
-
+    
     return min.x < other.min.x + math::eps &&
            min.y < other.min.y + math::eps &&
            min.z < other.min.z + math::eps &&
