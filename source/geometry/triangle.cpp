@@ -63,7 +63,7 @@ Plane Triangle::get_plane() const {
 bool Triangle::is_inside(const Vector3D& p) const {
     assert(this->is_valid());
     assert(p.is_valid());
-    //assert(this->get_plane().is_contains(p));
+    assert(this->get_plane().is_contains(p));
 
     const Vector3D ab = b - a;
     const Vector3D bc = c - b;

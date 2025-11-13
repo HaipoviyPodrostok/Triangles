@@ -26,10 +26,11 @@ if (BUILD_TESTING)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
     add_test(NAME end2end
              COMMAND ${Python3_EXECUTABLE}
-                     ${CMAKE_SOURCE_DIR}/tests/end2end/run_e2e_test.py
-                     $<TARGET_FILE:triangles.x>)
+                     ${CMAKE_SOURCE_DIR}/tests/end2end/run.py
+                     -b $<TARGET_FILE:triangles.x>
+    )
     set_tests_properties(end2end PROPERTIES LABELS "e2e"
-                         TEST_PREFIX "unit:"
+                         TEST_PREFIX "e2e:"
     )
 endif()
 

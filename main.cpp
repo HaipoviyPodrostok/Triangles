@@ -40,7 +40,7 @@ int main() {
 
     for (size_t i = 0; i < input.size(); ++i) {
         if (is_intersected[i] == 1) {
-            std::cout << i + 1 << std::endl;
+            std::cout << i  << std::endl;
         }
     }
 
