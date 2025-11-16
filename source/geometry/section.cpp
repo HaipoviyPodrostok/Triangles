@@ -9,17 +9,17 @@
 namespace geometry {
 
 Section::Section(const Vector3D& a, const Vector3D& b)
-    : a_(a), b_(b) { }
+    : a(a), b(b) { }
 
 bool Section::is_valid() const {
-    return a_.is_valid() &&
-           b_.is_valid() &&
-           !((a_ - b_).is_zero());
+    return a.is_valid() &&
+           b.is_valid();
+           !((a - b).is_zero());
 }
 
 Line Section::get_line() const {
     this->is_valid();
-    return Line{a_, b_ - a_};
+    return Line{a, b - a};
 }
 
 bool Section::is_intersect(const Section& other) const {    
@@ -30,7 +30,7 @@ bool Section::is_intersect(const Section& other) const {
     const Line l2 = other.get_line();
     
     if (l1.is_match(l2)) {
-        const Vector3D d = b_ - a_;
+        const Vector3D d = b - a;
         
         const float abs_x = fabs(d.x);
         const float abs_y = fabs(d.y);
@@ -52,8 +52,8 @@ bool Section::is_intersect(const Section& other) const {
             }
         };
         
-        float a1 = get_1d_coord(a_);       float b1 = get_1d_coord(b_);
-        float a2 = get_1d_coord(other.a_); float b2 = get_1d_coord(other.b_);
+        float a1 = get_1d_coord(a);       float b1 = get_1d_coord(b);
+        float a2 = get_1d_coord(other.a); float b2 = get_1d_coord(other.b);
 
         if (a1 > b1) { std::swap(a1, b1); }
         if (a2 > b2) { std::swap(a2, b2); }
@@ -98,7 +98,7 @@ bool Section::is_intersect(const Line& other) const {
 bool Section::is_belong(const Line& line) const {
     assert(is_valid());
     assert(line.is_valid());
-    return line.is_contains(a_) && line.is_contains(b_);
+    return line.is_contains(a) && line.is_contains(b);
 }
 
 Vector3D Section::intersect_point(const Line& line) const {
@@ -109,14 +109,14 @@ Vector3D Section::intersect_point(const Line& line) const {
     const Line this_line = this->get_line();
 
     if (this_line.is_match(line)) {
-        return a_;
+        return a;
     }
 
     return this_line.intersect_point(line);
 }
 
 float Section::length() const {
-    return (a_ - b_).length();
+    return (a - b).length();
 }
 
 bool Section::is_contains(const Vector3D& p) const {
@@ -125,9 +125,9 @@ bool Section::is_contains(const Vector3D& p) const {
 
     if (!p.is_valid()) { return false; }
     
-    const Vector3D ap = p - a_;
-    const Vector3D ab = b_ - a_;
-    const Vector3D bp = p - b_;
+    const Vector3D ap = p - a;
+    const Vector3D ab = b - a;
+    const Vector3D bp = p - b;
 
     if ((ap).is_collinear(ab)) {
         float scalar_ap_bp = ap.scalar(bp);
@@ -138,8 +138,8 @@ bool Section::is_contains(const Vector3D& p) const {
 }
 
 void Section::print() const {
-    std::cout << "p1 = ";   a_.print();
-    std::cout << ", p2 = "; b_.print();
+    std::cout << "p1 = ";   a.print();
+    std::cout << ", p2 = "; b.print();
     std::cout << std::endl;
 }
 } // namespace geometry 

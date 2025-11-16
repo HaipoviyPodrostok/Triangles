@@ -7,8 +7,8 @@ namespace geometry {
 
 class Section {
 public:
-    Vector3D a_;
-    Vector3D b_;
+    Vector3D a;
+    Vector3D b;
 
     Section(const Vector3D& start, const Vector3D& end);
 

@@ -3,11 +3,16 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
 
 namespace geometry {
 
 Vector3D::Vector3D(float x_, float y_, float z_)
-    : x(x_), y(y_), z(z_) { }
+    : x(x_), y(y_), z(z_) {
+        if (!is_valid()) {
+            throw std::invalid_argument("Vector3D is not valid");
+        }
+}
 
 bool Vector3D::is_valid() const {
     return std::isfinite(x) && std::isfinite(y) && std::isfinite(z);
@@ -52,7 +57,6 @@ const float& Vector3D::operator[] (size_t idx) const {
     throw std::out_of_range("Vector3D index out of range");;
 }
 
-
 bool Vector3D::is_collinear(const Vector3D& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
@@ -82,7 +86,8 @@ float Vector3D::length() const {
 }
 
 float Vector3D::scalar(const Vector3D& other) const {
-    assert(this->is_valid()); 
+    assert(this->is_valid());
+    assert(other.is_valid());
     return (x * other.x + y * other.y + z * other.z);
 }
 

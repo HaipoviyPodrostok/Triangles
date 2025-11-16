@@ -7,13 +7,10 @@ namespace geometry {
 // -- line -- (r = origin + t * dir)
 class Line {
 public:
-    Vector3D origin_;
-    Vector3D dir_;
+    Vector3D origin;
+    Vector3D dir;
 
     Line(const Vector3D& origin, const Vector3D& dir);
-
-    Vector3D origin() const;
-    Vector3D dir()    const;
 
     bool is_valid() const;
     bool is_match(const Line& other) const;

@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
 
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
@@ -8,35 +9,43 @@
 namespace geometry {
 
 Line::Line(const Vector3D& origin, const Vector3D& dir)
-    : origin_(origin), dir_(dir) {
+    : origin(origin), dir(dir) {
     
+    if (!origin.is_valid()) {
+        throw std::invalid_argument("Origin vector is invalid");
+    }
+
+    if (!dir.is_valid()) {
+        throw std::invalid_argument("Direction vector is invalid");
+    }
+
     if (dir.is_zero()) {
         throw std::invalid_argument("Direction vector can not be (0, 0, 0)");
     }
 }
 
 bool Line::is_valid() const {
-    return origin_.is_valid() && dir_.is_valid() && !(dir_.is_zero());
+    return origin.is_valid() && dir.is_valid() && !(dir.is_zero());
 }
 
 bool Line::is_match(const Line& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
-    return dir_.is_collinear(other.dir_) &&
-           (origin_ - other.origin_).is_collinear(dir_);
+    return dir.is_collinear(other.dir) &&
+           (origin - other.origin).is_collinear(dir);
 }
 
 bool Line::is_parallel(const Line& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
-    return dir_.is_collinear(other.dir_) &&
-           !(origin_ - other.origin_).is_collinear(dir_);
+    return dir.is_collinear(other.dir) &&
+           !(origin - other.origin).is_collinear(dir);
 }
 
 bool Line::is_contains(const Vector3D& point) const {
     assert(this->is_valid());
     assert(point.is_valid());
-    return ((point - origin_).is_collinear(dir_));
+    return ((point - origin).is_collinear(dir));
 }
 
 bool Line::is_intersect(const Line& other) const {
@@ -46,8 +55,8 @@ bool Line::is_intersect(const Line& other) const {
     if (is_match(other))    { return true;  }
     if (is_parallel(other)) { return false; }
 
-    const Vector3D v = origin_ - other.origin_;
-    const Vector3D n = dir_.cross(other.dir_);
+    const Vector3D v = origin - other.origin;
+    const Vector3D n = dir.cross(other.dir);
 
     return math::is_zero(v.scalar(n));
 }
@@ -60,10 +69,10 @@ Vector3D Line::intersect_point(const Line& other) const {
     assert(this->is_intersect(other));
     assert(!this->is_match(other));
 
-    const Vector3D& p1 = origin_;
-    const Vector3D& d1 = dir_;
-    const Vector3D& p2 = other.origin_;
-    const Vector3D& d2 = other.dir_;
+    const Vector3D& p1 = origin;
+    const Vector3D& d1 = dir;
+    const Vector3D& p2 = other.origin;
+    const Vector3D& d2 = other.dir;
 
     const Vector3D n = d1.cross(d2);
     assert(!n.is_zero());
@@ -79,11 +88,11 @@ Vector3D Line::intersect_point(const Line& other) const {
         return a;
     }
 
-    return Vector3D::non_valid();
+    return Vector3D::invalid();
 }
 
 void Line::print() const {
-    std::cout << "origin = "; origin_.print();
-    std::cout << ", dir = ";  dir_.print();
+    std::cout << "origin = "; origin.print();
+    std::cout << ", dir = ";  dir.print();
 }
 }// namespace geometry

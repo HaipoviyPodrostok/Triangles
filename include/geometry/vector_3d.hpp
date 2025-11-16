@@ -16,7 +16,7 @@ struct Vector3D {
 
     Vector3D(float x_ = NAN, float y_ = NAN, float z_ = NAN);
 
-    static inline Vector3D non_valid() { return {NAN, NAN, NAN}; }
+    static inline Vector3D invalid() { return {NAN, NAN, NAN}; }
     
     bool is_valid     ()                      const;
     bool is_zero      ()                      const;
