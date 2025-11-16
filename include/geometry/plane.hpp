@@ -19,7 +19,8 @@ public:
     bool is_match(const Plane& other) const;
     bool is_parallel(const Plane& other) const;
     bool is_contains(const Vector3D& p) const;
-    bool is_intersected(const Line& l) const;
-    Vector3D get_intersect_point(const Line& l) const;
+    bool is_contains(const Line& line) const;
+    bool is_intersected(const Line& line) const;
+    Vector3D get_intersect_point(const Line& line) const;
 };
 } // namespace geometry

@@ -55,30 +55,38 @@ bool Plane::is_contains(const Vector3D& p) const {
     return math::is_zero(p.scalar(normal) - D);
 }
 
-bool Plane::is_intersected(const Line& l) const {
+bool Plane::is_contains(const Line& line) const {
     assert(this->is_valid());
-    assert(l.is_valid());
+    assert(line.is_valid());
 
-    if (!math::is_zero(normal.scalar(l.dir))) { return true; }
-    return this->is_contains(l.origin);
+    return math::is_zero(normal.scalar(line.dir) &&
+           this->is_contains(line.origin)) ;
 }
 
-Vector3D Plane::get_intersect_point(const Line& l) const {
+bool Plane::is_intersected(const Line& line) const {
     assert(this->is_valid());
-    assert(l.is_valid());
-    if (!is_intersected(l)) {
+    assert(line.is_valid());
+
+    return !math::is_zero(normal.scalar(line.dir)) || 
+            this->is_contains(line);
+}
+
+Vector3D Plane::get_intersect_point(const Line& line) const {
+    assert(this->is_valid());
+    assert(line.is_valid());
+    if (!is_intersected(line)) {
         throw std::logic_error("Plane and line are not intersect");
     }
 
-    float denom = normal.scalar(l.dir);
-    float num   = normal.scalar(l.origin) + D;
+    float denom = normal.scalar(line.dir);
+    float num   = normal.scalar(line.origin) + D;
 
     assert(!(math::is_zero(denom) && !math::is_zero(num)));
     if (math::is_zero(denom)) {
-        return l.origin;
+        return line.origin;
     }
 
     float t = - num / denom;
-    return l.origin + l.dir * t;
+    return line.origin + line.dir * t;
 }
 } // namespace geometry
