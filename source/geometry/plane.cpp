@@ -59,8 +59,8 @@ bool Plane::is_contains(const Line& line) const {
     assert(this->is_valid());
     assert(line.is_valid());
 
-    return math::is_zero(normal.scalar(line.dir) &&
-           this->is_contains(line.origin)) ;
+    return math::is_zero(normal.scalar(line.dir)) &&
+           this->is_contains(line.origin);
 }
 
 bool Plane::is_intersected(const Line& line) const {
