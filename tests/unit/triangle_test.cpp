@@ -303,3 +303,192 @@ TEST(Triangle3DTest, SharedEdgeOppositeNormal) {
     Triangle t2({1,0,0}, {0,1,0}, {1,1,0}); // обратный порядок
     EXPECT_TRUE(t1.is_intersect(t2));
 }
+
+Triangle make_point_triangle(const Vector3D& p) {
+    return Triangle{p, p, p};
+}
+
+// Коллинеарный треугольник: вершины на одной прямой
+Triangle make_segment_triangle(const Vector3D& a,
+                               const Vector3D& b,
+                               const Vector3D& c) {
+    return Triangle{a, b, c};
+}
+
+// --------- Классификация треугольников ---------
+
+TEST(TriangleDegenerateTest, PointTriangleIsPointNotSection) {
+    Triangle t = make_point_triangle({0.f, 0.f, 0.f});
+
+    EXPECT_TRUE(t.is_point());
+    EXPECT_FALSE(t.is_section());
+}
+
+TEST(TriangleDegenerateTest, SegmentTriangleIsSectionNotPoint_DistinctVertices) {
+    // Вершины на оси X: (0,0,0)–(1,0,0)–(2,0,0)
+    Triangle t = make_segment_triangle(
+        {0.f, 0.f, 0.f},
+        {1.f, 0.f, 0.f},
+        {2.f, 0.f, 0.f}
+    );
+
+    EXPECT_FALSE(t.is_point());
+    EXPECT_TRUE(t.is_section());
+}
+
+TEST(TriangleDegenerateTest, SegmentTriangleIsSectionWhenTwoVerticesCoincide) {
+    // Две вершины совпадают, третья на прямой → отрезок
+    Triangle t = make_segment_triangle(
+        {0.f, 0.f, 0.f},
+        {0.f, 0.f, 0.f},
+        {1.f, 0.f, 0.f}
+    );
+
+    EXPECT_FALSE(t.is_point());
+    EXPECT_TRUE(t.is_section());
+}
+
+// --------- Point–Point ---------
+
+TEST(TriangleDegenerateIntersection, PointPointSameLocationIntersect) {
+    Triangle t1 = make_point_triangle({1.f, 2.f, 3.f});
+    Triangle t2 = make_point_triangle({1.f, 2.f, 3.f});
+
+    EXPECT_TRUE(t1.is_intersect(t2));
+    EXPECT_TRUE(t2.is_intersect(t1));
+}
+
+TEST(TriangleDegenerateIntersection, PointPointDifferentLocationDoNotIntersect) {
+    Triangle t1 = make_point_triangle({0.f, 0.f, 0.f});
+    Triangle t2 = make_point_triangle({1.f, 0.f, 0.f});
+
+    EXPECT_FALSE(t1.is_intersect(t2));
+    EXPECT_FALSE(t2.is_intersect(t1));
+}
+
+// --------- Point–Section ---------
+
+TEST(TriangleDegenerateIntersection, PointOnSegmentTriangleIntersect) {
+    // Треугольник-отрезок на оси X: (0,0,0)–(2,0,0)–(1,0,0)
+    Triangle seg = make_segment_triangle(
+        {0.f, 0.f, 0.f},
+        {2.f, 0.f, 0.f},
+        {1.f, 0.f, 0.f}
+    );
+    Triangle pt  = make_point_triangle({1.f, 0.f, 0.f}); // лежит на отрезке
+
+    // Ветка: this->is_point() && other.is_section()
+    EXPECT_TRUE(pt.is_intersect(seg));
+    // Ветка: this->is_section() && other.is_point()
+    EXPECT_TRUE(seg.is_intersect(pt));
+}
+
+TEST(TriangleDegenerateIntersection, PointOutsideSegmentTriangleNoIntersect) {
+    Triangle seg = make_segment_triangle(
+        {0.f, 0.f, 0.f},
+        {2.f, 0.f, 0.f},
+        {1.f, 0.f, 0.f}
+    );
+    Triangle pt  = make_point_triangle({3.f, 0.f, 0.f}); // вне отрезка
+
+    EXPECT_FALSE(pt.is_intersect(seg));
+    EXPECT_FALSE(seg.is_intersect(pt));
+}
+
+// --------- Section–Section ---------
+
+TEST(TriangleDegenerateIntersection, CollinearOverlappingSegmentsIntersect) {
+    // Первый «треугольник-отрезок»: [0,2] по оси X
+    Triangle s1 = make_segment_triangle(
+        {0.f, 0.f, 0.f},
+        {1.f, 0.f, 0.f},
+        {2.f, 0.f, 0.f}
+    );
+    // Второй: [1,3] по оси X
+    Triangle s2 = make_segment_triangle(
+        {1.f, 0.f, 0.f},
+        {3.f, 0.f, 0.f},
+        {2.f, 0.f, 0.f}
+    );
+
+    // Ветка: this->is_section() && other->is_section()
+    EXPECT_TRUE(s1.is_intersect(s2));
+    EXPECT_TRUE(s2.is_intersect(s1));
+}
+
+TEST(TriangleDegenerateIntersection, CollinearDisjointSegmentsDoNotIntersect) {
+    // Первый: [0,1]
+    Triangle s1 = make_segment_triangle(
+        {0.f, 0.f, 0.f},
+        {1.f, 0.f, 0.f},
+        {0.5f, 0.f, 0.f}
+    );
+    // Второй: [2,3]
+    Triangle s2 = make_segment_triangle(
+        {2.f, 0.f, 0.f},
+        {3.f, 0.f, 0.f},
+        {2.5f, 0.f, 0.f}
+    );
+
+    EXPECT_FALSE(s1.is_intersect(s2));
+    EXPECT_FALSE(s2.is_intersect(s1));
+}
+
+TEST(TriangleDegenerateIntersection, SkewSegmentsIn3DDoNotIntersect) {
+    // Отрезок вдоль X в z=0
+    Triangle s1 = make_segment_triangle(
+        {0.f, 0.f, 0.f},
+        {1.f, 0.f, 0.f},
+        {0.5f, 0.f, 0.f}
+    );
+    // Отрезок вдоль Y в z=1
+    Triangle s2 = make_segment_triangle(
+        {0.f, 0.f, 1.f},
+        {0.f, 1.f, 1.f},
+        {0.f, 0.5f, 1.f}
+    );
+
+    EXPECT_FALSE(s1.is_intersect(s2));
+    EXPECT_FALSE(s2.is_intersect(s1));
+}
+
+// --------- Section–Нормальный треугольник ---------
+
+TEST(TriangleDegenerateIntersection, SegmentCrossesProperTriangle) {
+    // Нормальный треугольник в плоскости z=0
+    Triangle tri(
+        {0.f, 0.f, 0.f},
+        {2.f, 0.f, 0.f},
+        {0.f, 2.f, 0.f}
+    );
+
+    // Треугольник-отрезок: от (1, -1, 0) до (1, 3, 0) (пересекает tri по высоте)
+    Triangle seg = make_segment_triangle(
+        {1.f, -1.f, 0.f},
+        {1.f,  3.f, 0.f},
+        {1.f,  0.f, 0.f}
+    );
+
+    // Ветка: this->is_section() → other.is_intersect(Section)
+    EXPECT_TRUE(seg.is_intersect(tri));
+    // Ветка: other.is_section() → this->is_intersect(Section)
+    EXPECT_TRUE(tri.is_intersect(seg));
+}
+
+TEST(TriangleDegenerateIntersection, SegmentFarFromProperTriangleNoIntersect) {
+    Triangle tri(
+        {0.f, 0.f, 0.f},
+        {2.f, 0.f, 0.f},
+        {0.f, 2.f, 0.f}
+    );
+
+    // Отрезок в параллельной плоскости z=1
+    Triangle seg = make_segment_triangle(
+        {0.f, 0.f, 1.f},
+        {2.f, 0.f, 1.f},
+        {1.f, 1.f, 1.f}
+    );
+
+    EXPECT_FALSE(seg.is_intersect(tri));
+    EXPECT_FALSE(tri.is_intersect(seg));
+}

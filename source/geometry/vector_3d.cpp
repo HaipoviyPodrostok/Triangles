@@ -7,11 +7,8 @@
 
 namespace geometry {
 
-Vector3D::Vector3D(float x_, float y_, float z_)
-    : x(x_), y(y_), z(z_) {
-        if (!is_valid()) {
-            throw std::invalid_argument("Vector3D is not valid");
-        }
+Vector3D::Vector3D(float x, float y, float z)
+    : x(x), y(y), z(z) {
 }
 
 bool Vector3D::is_valid() const {

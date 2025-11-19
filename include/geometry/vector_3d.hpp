@@ -9,32 +9,33 @@
 namespace geometry {
 
 // TODO template
-struct Vector3D {
-    float x;
-    float y;
-    float z;
+template<typename T>
+struct Vector3DBase {
+    T x;
+    T y;
+    T z;
 
-    Vector3D(float x_ = NAN, float y_ = NAN, float z_ = NAN);
+    Vector3DBase(T x = NAN, T y = NAN, T z = NAN);
 
-    static inline Vector3D invalid() { return {NAN, NAN, NAN}; }
+    static inline Vector3DBase invalid() { return {NAN, NAN, NAN}; }
     
     bool is_valid     ()                      const;
     bool is_zero      ()                      const;
-    bool is_collinear (const Vector3D& other) const;
-    bool is_codirected(const Vector3D& other) const;
-    bool is_match     (const Vector3D& other) const;
+    bool is_collinear (const Vector3DBase& other) const;
+    bool is_codirected(const Vector3DBase& other) const;
+    bool is_match     (const Vector3DBase& other) const;
 
     float length() const;
-    float scalar(const Vector3D& other) const;
+    float scalar(const Vector3DBase& other) const;
 
-    Vector3D     operator+  (const Vector3D& other) const;
-    Vector3D     operator-  (const Vector3D& other) const;
-    Vector3D     operator*  (float scalar)          const;
-    Vector3D     operator/  (float scalar)          const;
+    Vector3DBase     operator+  (const Vector3DBase& other) const;
+    Vector3DBase     operator-  (const Vector3DBase& other) const;
+    Vector3DBase     operator*  (float scalar)          const;
+    Vector3DBase     operator/  (float scalar)          const;
     float&       operator[] (size_t idx)                 ;
     const float& operator[] (size_t idx)            const; 
           
-    Vector3D cross(const Vector3D& other) const;
+    Vector3DBase cross(const Vector3DBase& other) const;
     
     void print() const;
 };

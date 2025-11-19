@@ -13,7 +13,7 @@ Section::Section(const Vector3D& a, const Vector3D& b)
 
 bool Section::is_valid() const {
     return a.is_valid() &&
-           b.is_valid();
+           b.is_valid() &&
            !((a - b).is_zero());
 }
 

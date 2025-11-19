@@ -1,5 +1,5 @@
 #pragma once
-#include "acceleration/AABB.hpp"
+#include "acceleration.hpp"
 #include "geometry/triangle.hpp"
 #include "math/math_utils.hpp"
 #include <cstddef>

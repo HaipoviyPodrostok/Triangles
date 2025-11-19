@@ -1,6 +1,6 @@
 #pragma  once
 
-#include "geometry/line.hpp"
+#include "line.hpp"
 #include "vector_3d.hpp"
 
 namespace geometry {

@@ -4,7 +4,7 @@
 #include <math.h>
 #include <gtest/gtest.h>
 
-#include "geometry/section.hpp"
+#include "section.hpp"
 #include "vector_3d.hpp"
 #include "line.hpp"
 #include "plane.hpp"

@@ -53,9 +53,10 @@ bool Triangle::is_intersect(const Section& sec) const {
 
     if (!pl.is_intersected(l)) { return false; }
     if (pl.is_contains(l)) {
-        return Section{a, b}.is_intersect(l) ||
-               Section{b, c}.is_intersect(l) ||
-               Section{a, c}.is_intersect(l);
+        return Section{a, b}.is_intersect(sec) ||
+               Section{b, c}.is_intersect(sec) ||
+               Section{a, c}.is_intersect(sec) ||
+               is_inside(sec.a) || is_inside(sec.b);
     }
     Vector3D x = pl.get_intersect_point(l);
     return sec.is_contains(x) && this->is_inside(x);

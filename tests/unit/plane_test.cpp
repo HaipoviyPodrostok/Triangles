@@ -63,7 +63,7 @@ TEST(PlaneTest, ConstructorWithNegativeNormalGivesSamePlaneOppositeD) {
     Plane p2(Vector3D(0, 0, 3), Vector3D(0, 0, -1));
 
     // норма разная по направлению, но D тоже меняется знаком
-    EXPECT_TRUE(p1.normal().is_collinear(p2.normal()));
+    EXPECT_TRUE(p1.normal.is_collinear(p2.normal));
     EXPECT_NEAR(p1.D, -p2.D, 1e-6);
 }
 
@@ -109,7 +109,7 @@ TEST(PlaneTest, SkewedPlanesAreNotParallel) {
 TEST(PlaneTest, AlmostParallelPlanesAreStillParallelWithinEpsilon) {
     Plane p1(Vector3D(0, 0, 0), Vector3D(0, 0, 1));
     Plane p2(Vector3D(0, 0, 1), Vector3D(1e-7, 0, 1)); // чуть наклонена
-    EXPECT_TRUE(p1.normal().is_collinear(p2.normal()));
+    EXPECT_TRUE(p1.normal.is_collinear(p2.normal));
     EXPECT_TRUE(p1.is_parallel(p2));
 }
 

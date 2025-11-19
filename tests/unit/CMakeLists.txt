@@ -1,5 +1,13 @@
-add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/googletest
-                 ${CMAKE_BINARY_DIR}/third_party/googletest)
+include(FetchContent)
+
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(googletest)
 
 add_executable(geometry_test.x
     triangle_test.cpp
