@@ -5,7 +5,7 @@
 #include "math/math_utils.hpp"
 #include "geometry/geometry.hpp"
 using namespace geometry;
-constexpr float eps = math::flt_tolerance;
+constexpr float eps = math::dbl_tolerance;
 
 // === Вспомогательные функции ===
 Triangle make_triangle_xy() {

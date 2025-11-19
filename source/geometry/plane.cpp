@@ -20,10 +20,10 @@ bool Plane::is_valid() const {
             !normal.is_zero());
 }
 
-float Plane::get_distance(const Plane& other) const {
+double Plane::get_distance(const Plane& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
-    float sign = (normal.is_codirected(other.normal)) ? 1.0f : -1.0f;
+    double sign = (normal.is_codirected(other.normal)) ? 1.0 : -1.0;
     return std::fabs(D - sign * other.D);
 }
 
@@ -78,15 +78,15 @@ Vector3D Plane::get_intersect_point(const Line& line) const {
         throw std::logic_error("Plane and line are not intersect");
     }
 
-    float denom = normal.scalar(line.dir);
-    float num   = normal.scalar(line.origin) + D;
+    double denom = normal.scalar(line.dir);
+    double num   = normal.scalar(line.origin) + D;
 
     assert(!(math::is_zero(denom) && !math::is_zero(num)));
     if (math::is_zero(denom)) {
         return line.origin;
     }
 
-    float t = - num / denom;
+    double t = - num / denom;
     return line.origin + line.dir * t;
 }
 } // namespace geometry

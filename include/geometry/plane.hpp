@@ -10,12 +10,12 @@ class Plane {
 public:
     Vector3D r;
     Vector3D normal;
-    float D;
+    double D;
 
     Plane(const Vector3D& point, const Vector3D& n);
 
     bool is_valid() const;
-    float get_distance(const Plane& other) const;
+    double get_distance(const Plane& other) const;
     bool is_match(const Plane& other) const;
     bool is_parallel(const Plane& other) const;
     bool is_contains(const Vector3D& p) const;

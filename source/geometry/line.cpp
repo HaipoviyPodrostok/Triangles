@@ -76,10 +76,10 @@ Vector3D Line::intersect_point(const Line& other) const {
 
     const Vector3D n = d1.cross(d2);
     assert(!n.is_zero());
-    const float n_len_squared = n.length() * n.length();
+    const double n_len_squared = n.length() * n.length();
 
-    const float t = ( (p2 - p1).cross(d2) ).scalar(n) / n_len_squared;
-    const float s = ( (p2 - p1).cross(d1) ).scalar(n) / n_len_squared;
+    const double t = ( (p2 - p1).cross(d2) ).scalar(n) / n_len_squared;
+    const double s = ( (p2 - p1).cross(d1) ).scalar(n) / n_len_squared;
 
     const Vector3D a = p1 + d1 * t;
     const Vector3D b = p2 + d2 * s;

@@ -32,9 +32,9 @@ bool Section::is_intersect(const Section& other) const {
     if (l1.is_match(l2)) {
         const Vector3D d = b - a;
         
-        const float abs_x = fabs(d.x);
-        const float abs_y = fabs(d.y);
-        const float abs_z = fabs(d.z);
+        const double abs_x = std::fabs(d.x);
+        const double abs_y = std::fabs(d.y);
+        const double abs_z = std::fabs(d.z);
 
         math::Axis axis = (abs_x >= abs_y && abs_x >= abs_z) ? math::Axis::X :
                     (abs_y >= abs_z ? math::Axis::Y : math::Axis::Z);
@@ -52,14 +52,14 @@ bool Section::is_intersect(const Section& other) const {
             }
         };
         
-        float a1 = get_1d_coord(a);       float b1 = get_1d_coord(b);
-        float a2 = get_1d_coord(other.a); float b2 = get_1d_coord(other.b);
+        double a1 = get_1d_coord(a);       double b1 = get_1d_coord(b);
+        double a2 = get_1d_coord(other.a); double b2 = get_1d_coord(other.b);
 
         if (a1 > b1) { std::swap(a1, b1); }
         if (a2 > b2) { std::swap(a2, b2); }
 
-        const float left_max  = std::max(a1, a2);
-        const float right_min = std::min(b1, b2);
+        const double left_max  = std::max(a1, a2);
+        const double right_min = std::min(b1, b2);
 
         return right_min + math::eps >= left_max;
     }
@@ -115,7 +115,7 @@ Vector3D Section::intersect_point(const Line& line) const {
     return this_line.intersect_point(line);
 }
 
-float Section::length() const {
+double Section::length() const {
     return (a - b).length();
 }
 
@@ -130,7 +130,7 @@ bool Section::is_contains(const Vector3D& p) const {
     const Vector3D bp = p - b;
 
     if ((ap).is_collinear(ab)) {
-        float scalar_ap_bp = ap.scalar(bp);
+        double scalar_ap_bp = ap.scalar(bp);
         return (scalar_ap_bp < 0 || math::is_zero(scalar_ap_bp));
     }
 

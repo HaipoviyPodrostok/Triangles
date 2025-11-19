@@ -17,7 +17,7 @@ public:
     Vector3D b;
     Vector3D c;
     
-    Vector3D centroid;
+    Vector3D centre;
     
     Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c);
     

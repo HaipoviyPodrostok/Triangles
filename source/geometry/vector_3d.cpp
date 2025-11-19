@@ -7,7 +7,7 @@
 
 namespace geometry {
 
-Vector3D::Vector3D(float x, float y, float z)
+Vector3D::Vector3D(double x, double y, double z)
     : x(x), y(y), z(z) {
 }
 
@@ -27,18 +27,18 @@ Vector3D Vector3D::operator- (const Vector3D& other) const {
     return Vector3D{x - other.x, y - other.y, z - other.z};
 }
 
-Vector3D Vector3D::operator* (float scalar) const {
+Vector3D Vector3D::operator* (double scalar) const {
     assert(this->is_valid());
     return Vector3D{x * scalar, y * scalar, z * scalar};
 }
 
-Vector3D Vector3D::operator/ (float scalar) const {
+Vector3D Vector3D::operator/ (double scalar) const {
     assert(this->is_valid());
     assert(!math::is_zero(scalar));
     return *this * (1 / scalar);
 }
 
-float& Vector3D::operator[] (size_t idx) {
+double& Vector3D::operator[] (size_t idx) {
     assert(this->is_valid());
     if (idx == 0) { return x; };
     if (idx == 1) { return y; };
@@ -46,7 +46,7 @@ float& Vector3D::operator[] (size_t idx) {
     throw std::out_of_range("Vector3D index out of range");;
 }
 
-const float& Vector3D::operator[] (size_t idx) const {
+const double& Vector3D::operator[] (size_t idx) const {
     assert(this->is_valid());
     if (idx == 0) { return x; };
     if (idx == 1) { return y; };
@@ -77,12 +77,12 @@ bool Vector3D::is_zero() const {
     return (math::is_zero(length())) ;
 }
 
-float Vector3D::length() const {
+double Vector3D::length() const {
     assert(this->is_valid());
     return (std::sqrtf(x * x + y * y + z * z));
 }
 
-float Vector3D::scalar(const Vector3D& other) const {
+double Vector3D::scalar(const Vector3D& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
     return (x * other.x + y * other.y + z * other.z);

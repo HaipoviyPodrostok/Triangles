@@ -17,7 +17,7 @@ public:
     bool is_intersect(const Line& other) const;
     bool is_belong(const Line& line) const; 
     Vector3D intersect_point(const Line& other) const;
-    float length() const;
+    double length() const;
     Line get_line() const;
     bool is_contains(const Vector3D& p) const;
     void print() const;

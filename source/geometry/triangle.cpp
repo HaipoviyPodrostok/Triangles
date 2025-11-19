@@ -17,7 +17,7 @@ Triangle::Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c)
         if (!is_valid()) {
             throw std::invalid_argument("Triangle has invalid vertices");
         }
-        centroid = get_centre();
+        centre = get_centre();
     };
 
 bool Triangle::is_valid() const {    
@@ -146,9 +146,9 @@ bool Triangle::is_inside(const Vector3D& p) const {
     
     const Vector3D normal = ab.cross(bc);
 
-    const float side_ab = ( normal.cross(ab) ).scalar(ap);
-    const float side_bc = ( normal.cross(bc) ).scalar(bp);
-    const float side_ca = ( normal.cross(ca) ).scalar(cp);
+    const double side_ab = ( normal.cross(ab) ).scalar(ap);
+    const double side_bc = ( normal.cross(bc) ).scalar(bp);
+    const double side_ca = ( normal.cross(ca) ).scalar(cp);
 
     return (side_ab >= - math::eps && side_bc >= - math::eps && side_ca >= - math::eps) ||
            (side_ab <=   math::eps && side_bc <=   math::eps && side_ca <=   math::eps);
@@ -288,8 +288,8 @@ Line Triangle::get_intersect_line(const Triangle& other) const {
 Vector3D Triangle::get_centre() const {
     assert(this->is_valid());
 
-    return {(a.x + b.x + c.x) / 3.0f, 
-            (a.y + b.y + c.y) / 3.0f,
-            (a.z + b.z + c.z) / 3.0f };
+    return {(a.x + b.x + c.x) / 3.0, 
+            (a.y + b.y + c.y) / 3.0,
+            (a.z + b.z + c.z) / 3.0 };
 }
 } // namespace geometry

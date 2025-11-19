@@ -63,9 +63,9 @@ int BVHTree::partition_by_median(const size_t start, const size_t n_objs) {
 
     const AABB& box = calculate_box(start, n_objs);
 
-    const float spread_x = std::fabs(box.max.x - box.min.x);
-    const float spread_y = std::fabs(box.max.y - box.min.y);
-    const float spread_z = std::fabs(box.max.z - box.min.z);
+    const double spread_x = std::fabs(box.max.x - box.min.x);
+    const double spread_y = std::fabs(box.max.y - box.min.y);
+    const double spread_z = std::fabs(box.max.z - box.min.z);
 
     math::Axis wildest_axis = (spread_x >= spread_y && spread_x >= spread_z) ? math::Axis::X :
                 (spread_y >= spread_z ? math::Axis::Y : math::Axis::Z);
@@ -86,21 +86,21 @@ void BVHTree::sort_triangles_by_centers(const size_t start, const size_t n_objs,
     switch(wildest_axis) {
         case math::Axis::X: {
             auto centre_cmp = [](const geometry::Triangle& a, const geometry::Triangle& b) {
-                return  a.centroid.x < b.centroid.x;
+                return  a.centre.x < b.centre.x;
             };
             std::nth_element(begin, mid, end, centre_cmp);
             break;
         }
         case math::Axis::Y: {
             auto centre_cmp = [](const geometry::Triangle& a, const geometry::Triangle& b) {
-                return  a.centroid.y < b.centroid.y;
+                return  a.centre.y < b.centre.y;
             };
             std::nth_element(begin, mid, end, centre_cmp);
             break;
         }
         default: {
             auto centre_cmp = [](const geometry::Triangle& a, const geometry::Triangle& b) {
-                return  a.centroid.z < b.centroid.z;
+                return  a.centre.z < b.centre.z;
             };
             std::nth_element(begin, mid, end, centre_cmp);
             break;

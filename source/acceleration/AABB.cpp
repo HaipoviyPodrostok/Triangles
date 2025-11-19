@@ -53,8 +53,8 @@ void AABB::expand(const geometry::Triangle& tri) {
 
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
-            min[j] = fmin(min[j], tri_points[i][j]);
-            max[j] = fmax(max[j], tri_points[i][j]);
+            min[j] = std::fmin(min[j], tri_points[i][j]);
+            max[j] = std::fmax(max[j], tri_points[i][j]);
         }        
     }
 }
@@ -64,8 +64,8 @@ void AABB::merge(const AABB& other) {
     assert(other.is_valid());
 
     for (size_t i = 0; i < 3; ++i) {
-        min[i] = fmin(min[i], other.min[i]);
-        max[i] = fmax(max[i], other.max[i]);
+        min[i] = std::fmin(min[i], other.min[i]);
+        max[i] = std::fmax(max[i], other.max[i]);
     }
 }
 

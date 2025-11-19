@@ -6,7 +6,7 @@
 #include <vector>
 
 using namespace geometry;
-constexpr float eps = math::flt_tolerance;
+constexpr float eps = math::dbl_tolerance;
 
 int main() {
     size_t tri_num = 0;
