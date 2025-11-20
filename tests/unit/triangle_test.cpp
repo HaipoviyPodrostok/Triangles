@@ -5,7 +5,6 @@
 #include "math/math_utils.hpp"
 #include "geometry/geometry.hpp"
 using namespace geometry;
-constexpr float eps = math::dbl_tolerance;
 
 // === Вспомогательные функции ===
 Triangle make_triangle_xy() {
@@ -81,7 +80,7 @@ TEST(SectionOppositeDirection, CollinearOppositeDirectionTouchAtEndpoint) {
 // === КОЛЛИНЕАРНЫЕ, но раздельные (не касаются) ===
 TEST(SectionOppositeDirection, CollinearOppositeDirectionDisjoint) {
     Section s1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
-    Section s2(Vector3D(2 + eps * 10, 0, 0), Vector3D(3, 0, 0)); // разрыв > eps
+    Section s2(Vector3D(2 + math::eps * 10, 0, 0), Vector3D(3, 0, 0)); // разрыв > eps
     EXPECT_FALSE(s1.is_intersect(s2));
     EXPECT_FALSE(s2.is_intersect(s1));
 }
@@ -96,7 +95,7 @@ TEST(SectionOppositeDirection, CrossingUnderAngle) {
 // === Почти касаются, но не пересекаются (с eps-зазором) ===
 TEST(SectionOppositeDirection, AlmostTouchButOutsideEps) {
     Section s1(Vector3D(0, 0, 0), Vector3D(1, 0, 0));
-    Section s2(Vector3D(1 + eps * 10, 0, 0), Vector3D(2 + eps * 10, 0, 0));
+    Section s2(Vector3D(1 + math::eps * 10, 0, 0), Vector3D(2 + math::eps * 10, 0, 0));
     EXPECT_FALSE(s1.is_intersect(s2)); // зазор больше eps
 }
 

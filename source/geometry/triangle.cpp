@@ -99,6 +99,14 @@ bool Triangle::is_intersect(const Triangle& other) const {
         return Section{p, q}.is_intersect(Section{m , n});
     }
 
+    if (this->is_point()) {
+        return other.is_inside(a);
+    }
+
+    if (other.is_point()) {
+        return this->is_inside(other.a);
+    }
+
     if (this->is_section()) {
         auto [p, q] = pick_section(a, b, c);
         return other.is_intersect(Section{p, q});
@@ -123,7 +131,9 @@ bool Triangle::is_intersect(const Triangle& other) const {
 
 Plane Triangle::get_plane() const {
     assert(this->is_valid());
-    
+    assert(!this->is_point());
+    assert(!this->is_section());
+
     const Vector3D ab = b - a;
     const Vector3D ac = c - a;
 
@@ -135,7 +145,7 @@ Plane Triangle::get_plane() const {
 bool Triangle::is_inside(const Vector3D& p) const {
     assert(this->is_valid());
     assert(p.is_valid());
-    assert(this->get_plane().is_contains(p));
+    if (!this->get_plane().is_contains(p)) { return false; }
 
     const Vector3D ab = b - a;
     const Vector3D bc = c - b;

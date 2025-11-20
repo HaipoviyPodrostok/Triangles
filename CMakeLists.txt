@@ -34,6 +34,15 @@ if (BUILD_TESTING)
     )
 endif()
 
+option(ENABLE_LOGS "Enable spdlog logging" ON)
+
+if (ENABLE_LOGS)
+    find_package(spdlog REQUIRED)
+    target_link_libraries(triangles_lib PRIVATE spdlog::spdlog)
+    target_compile_definitions(triangles_lib PRIVATE ENABLE_LOGGING)
+endif()
+
+
 #file(GLOB testfiles "${CMAKE_SOURCE_DIR}/tests/*.in")
 
 #foreach(file ${testfiles})
