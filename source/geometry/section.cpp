@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 namespace geometry {
 
@@ -72,6 +74,7 @@ bool Section::is_intersect(const Section& other) const {
 
     if (l1.is_intersect(l2)) {
         const Vector3D p = l1.intersect_point(l2);
+        spdlog::debug("p: {}, {}, {}", p.x, p.y, p.z);
         assert(p.is_valid());
         return ( this->is_contains(p) && other.is_contains(p) );
     }    
@@ -94,6 +97,7 @@ bool Section::is_intersect(const Line& other) const {
     }
 
     const Vector3D p = l1.intersect_point(other);
+    assert(p.is_valid()); //TODO
     if (!p.is_valid()) {
         return false;
     }
@@ -110,15 +114,20 @@ bool Section::is_belong(const Line& line) const {
 Vector3D Section::intersect_point(const Line& line) const {
     assert(this->is_valid());
     assert(line.is_valid());
-    assert(this->is_intersect(line));
+    
+    if (!this->is_intersect(line)) {
+        return Vector3D::invalid();
+    }
 
     const Line this_line = this->get_line();
 
     if (this_line.is_match(line)) {
-        return a;
+        return Vector3D::invalid();
     }
 
-    return this_line.intersect_point(line);
+    Vector3D p = this_line.intersect_point(line);
+    assert(p.is_valid());
+    return p;
 }
 
 double Section::length() const {

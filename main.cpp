@@ -12,6 +12,7 @@ using namespace geometry;
 int main() {
     
     auto file_logger = spdlog::basic_logger_mt("file_logger", "log/app.log");
+    spdlog::set_level(spdlog::level::debug);
     spdlog::set_default_logger(file_logger);
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] %v");
     spdlog::flush_on(spdlog::level::debug);
@@ -39,10 +40,14 @@ int main() {
 
     for (size_t i = 0; i < input.size(); ++i) {
         for (size_t j = i + 1; j < input.size(); ++j) {
-            spdlog::info("Intersection {} and {}:", i, j);
+            spdlog::debug("Intersection {} and {}:", i, j);
             if (input[i].is_intersect(input[j])) {
+                spdlog::debug("yes");
                 is_intersected[i] = 1;
                 is_intersected[j] = 1;
+            }
+            else {
+                spdlog::debug("no");
             }
         }
     }

@@ -15,7 +15,9 @@ struct Vector3D {
 
     Vector3D(double x_ = NAN, double y_ = NAN, double z_ = NAN);
 
-    static inline Vector3D invalid() { return {NAN, NAN, NAN}; }
+    static inline Vector3D invalid() {
+        return {NAN, NAN, NAN};
+    }
     
     bool is_valid     ()                      const;
     bool is_zero      (double scale = 1.0)    const;

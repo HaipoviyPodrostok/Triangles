@@ -73,6 +73,7 @@ bool Triangle::is_intersect(const Section& sec) const {
                is_inside(sec.a) || is_inside(sec.b);
     }
     Vector3D x = pl.get_intersect_point(l);
+    assert(x.is_valid());
     return sec.is_contains(x) && this->is_inside(x);
 }
 
@@ -174,12 +175,8 @@ bool Triangle::is_inside(const Vector3D& p) const {
     const double side_bc = ( normal.cross(bc) ).scalar(bp);
     const double side_ca = ( normal.cross(ca) ).scalar(cp);
 
-    const double max_len   = std::max( ab.length(), std::max(bc.length(), ca.length()) );
-    const double scale     = max_len * max_len;
-    const double scale_eps = math::get_eps(scale);
-
-    return (side_ab >= - scale_eps && side_bc >= - scale_eps && side_ca >= - scale_eps) ||
-           (side_ab <=   scale_eps && side_bc <=   scale_eps && side_ca <=   scale_eps);
+    return (side_ab >= - math::eps && side_bc >= - math::eps && side_ca >= - math::eps) ||
+           (side_ab <=   math::eps && side_bc <=   math::eps && side_ca <=   math::eps);
 }
 
 bool Triangle::is_intersect_2d(const Triangle& other) const {

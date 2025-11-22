@@ -4,7 +4,7 @@
 
 namespace math {
 
-inline constexpr double eps = 1e-6;
+inline constexpr double eps     = 1e-6;
 inline constexpr double abs_tol = 1e-6;
 inline constexpr double rel_tol = 1e-6;
 
@@ -17,9 +17,9 @@ enum class Axis {
 };
 
 enum class CmpResult {
-    Less  = -1,
-    Equal = 0,
-    Greater = 1,
+    Less    = -1,
+    Equal   =  0,
+    Greater =  1,
 };
 
 template <typename T>
@@ -75,12 +75,10 @@ template <typename T>
 inline T get_eps(T scale = 1.0, 
                  T abs = static_cast<T>(abs_tol),
                  T rel = static_cast<T>(rel_tol)) {
-    return std::max(abs_tol, rel_tol * scale);
+    return std::max(abs, rel * scale);
 }
 
 template <typename T>
-constexpr T sqr(T x) { return x * x;}
-
-
+constexpr T sqr(T x) { return x * x; }
 
 } // namespace math

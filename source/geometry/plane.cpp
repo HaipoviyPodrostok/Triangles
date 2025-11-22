@@ -75,7 +75,7 @@ Vector3D Plane::get_intersect_point(const Line& line) const {
     assert(this->is_valid());
     assert(line.is_valid());
     if (!is_intersected(line)) {
-        throw std::logic_error("Plane and line are not intersect");
+        return Vector3D::invalid();;
     }
 
     double denom = normal.scalar(line.dir);

@@ -4,7 +4,7 @@
 
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
-#include "math/math.hpp"
+#include "math/math_utils.hpp"
 
 namespace geometry {
 
@@ -32,7 +32,7 @@ bool Line::is_match(const Line& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
     return dir.is_collinear(other.dir) &&
-           (origin - other.origin).is_collinear(dir);
+          (origin - other.origin).is_collinear(dir);
 }
 
 bool Line::is_parallel(const Line& other) const {
@@ -67,8 +67,9 @@ bool Line::is_intersect(const Line& other) const {
 Vector3D Line::intersect_point(const Line& other) const {
     assert(is_valid());
     assert((other.is_valid()));
-    assert(this->is_intersect(other));
-    assert(!this->is_match(other));
+    if (!this->is_intersect(other) || this->is_match(other)) {
+        return Vector3D::invalid();
+    }
 
     const Vector3D& p1 = origin;
     const Vector3D& d1 = dir;
@@ -92,7 +93,11 @@ Vector3D Line::intersect_point(const Line& other) const {
     if (math::is_zero( (a - b).length() )) {
         return a;
     }
-
+    spdlog::debug("===================invalid======================");
+    spdlog::debug("a: {}, {}, {}", a.x, a.y, a.z);
+    spdlog::debug("b: {}, {}, {}", b.x, b.y, b.z);
+    spdlog::debug("================================================");
+    
     return Vector3D::invalid();
 }
 
