@@ -1,7 +1,7 @@
 #pragma once
 #include "acceleration.hpp"
 #include "geometry/triangle.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 #include <cstddef>
 #include <fstream>
 #include <string>

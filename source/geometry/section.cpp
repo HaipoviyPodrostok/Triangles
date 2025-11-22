@@ -1,7 +1,7 @@
 #include "geometry/section.hpp"
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -60,8 +60,14 @@ bool Section::is_intersect(const Section& other) const {
 
         const double left_max  = std::max(a1, a2);
         const double right_min = std::min(b1, b2);
+        
+        const double len1  = b1 - a1;
+        const double len2  = b2 - a2;
+        
+        const double scale     = std::max(std::fabs(len1), std::fabs(len2));
+        const double scale_eps = math::get_eps(scale);
 
-        return right_min + math::eps >= left_max;
+        return right_min + scale_eps >= left_max;
     }
 
     if (l1.is_intersect(l2)) {
@@ -131,7 +137,8 @@ bool Section::is_contains(const Vector3D& p) const {
 
     if ((ap).is_collinear(ab)) {
         double scalar_ap_bp = ap.scalar(bp);
-        return (scalar_ap_bp < 0 || math::is_zero(scalar_ap_bp));
+        double scale        = ab.length() * ab.length();
+        return (scalar_ap_bp < 0 || math::is_zero(scalar_ap_bp, scale));
     }
 
     return false;

@@ -1,7 +1,7 @@
 #include "geometry/plane.hpp"
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 #include <cassert>
 #include <stdexcept>
 
@@ -59,7 +59,7 @@ bool Plane::is_contains(const Line& line) const {
     assert(this->is_valid());
     assert(line.is_valid());
 
-    return math::is_zero(normal.scalar(line.dir)) &&
+    return math::is_zero(normal.scalar(line.dir), line.dir.length()) &&
            this->is_contains(line.origin);
 }
 

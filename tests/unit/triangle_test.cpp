@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include "geometry/triangle.hpp"
 #include "geometry/vector_3d.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 #include "geometry/geometry.hpp"
 using namespace geometry;
 

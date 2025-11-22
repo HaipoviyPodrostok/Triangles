@@ -2,7 +2,7 @@
 #include "geometry/plane.hpp"
 #include "geometry/section.hpp"
 #include "geometry/vector_3d.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 #include <cassert>
 #include <cstddef>
 #include <endian.h>
@@ -37,9 +37,23 @@ bool Triangle::is_point() const {
 
 bool Triangle::is_section() const {
     assert(this->is_valid());
-    if (is_point()) { return false; }
-    if ((b - a).is_zero() || (c - a).is_zero() || (b - c).is_zero()) { return true; }
-    if ((b - a).cross(c - a).is_zero()) { return true; }
+    if (is_point()) { return false; }  
+    
+    const Vector3D ab = b - a;
+    const Vector3D bc = c - b;
+    const Vector3D ac = c - a;
+
+    const double scale_ab = ab.length() * ab.length();
+    const double scale_bc = bc.length() * bc.length();   
+    const double scale_ac = ac.length() * ac.length();
+
+    if ( ab.is_zero(scale_ab) ||
+         bc.is_zero(scale_bc) || 
+         ac.is_zero(scale_ac) ) { return true; }
+    
+    if ( ( ab.cross(ac) ).is_zero(ab.length() * ac.length()) ) {
+        return true; 
+    }
     return false;
 }
 
@@ -160,8 +174,12 @@ bool Triangle::is_inside(const Vector3D& p) const {
     const double side_bc = ( normal.cross(bc) ).scalar(bp);
     const double side_ca = ( normal.cross(ca) ).scalar(cp);
 
-    return (side_ab >= - math::eps && side_bc >= - math::eps && side_ca >= - math::eps) ||
-           (side_ab <=   math::eps && side_bc <=   math::eps && side_ca <=   math::eps);
+    const double max_len   = std::max( ab.length(), std::max(bc.length(), ca.length()) );
+    const double scale     = max_len * max_len;
+    const double scale_eps = math::get_eps(scale);
+
+    return (side_ab >= - scale_eps && side_bc >= - scale_eps && side_ca >= - scale_eps) ||
+           (side_ab <=   scale_eps && side_bc <=   scale_eps && side_ca <=   scale_eps);
 }
 
 bool Triangle::is_intersect_2d(const Triangle& other) const {
@@ -169,12 +187,12 @@ bool Triangle::is_intersect_2d(const Triangle& other) const {
     assert(other.is_valid());
     assert(this->get_plane().is_match(other.get_plane()));
 
-    const Section ab {a, b};
-    const Section bc {b, c};
-    const Section ca {c, a};
-    const Section other_ab {other.a, other.b};
-    const Section other_bc {other.b, other.c};
-    const Section other_ca {other.c, other.a};
+    const Section ab{a, b};
+    const Section bc{b, c};
+    const Section ca{c, a};
+    const Section other_ab{other.a, other.b};
+    const Section other_bc{other.b, other.c};
+    const Section other_ca{other.c, other.a};
 
     const Section* sides1[3] = {&ab, &bc, &ca};
     const Section* sides2[3] = {&other_ab, &other_bc, &other_ca};

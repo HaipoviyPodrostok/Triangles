@@ -4,7 +4,7 @@
 
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 
 namespace geometry {
 
@@ -55,10 +55,11 @@ bool Line::is_intersect(const Line& other) const {
     if (is_match(other))    { return true;  }
     if (is_parallel(other)) { return false; }
 
-    const Vector3D v = origin - other.origin;
-    const Vector3D n = dir.cross(other.dir);
+    const Vector3D v   = origin - other.origin;
+    const Vector3D n   = dir.cross(other.dir);
+    const double scale = v.length() * n.length();
 
-    return math::is_zero(v.scalar(n));
+    return math::is_zero(v.scalar(n), scale);
 }
 
 // -- line this:  p1 + t * d1 --
@@ -80,6 +81,10 @@ Vector3D Line::intersect_point(const Line& other) const {
 
     const double t = ( (p2 - p1).cross(d2) ).scalar(n) / n_len_squared;
     const double s = ( (p2 - p1).cross(d1) ).scalar(n) / n_len_squared;
+
+    if ( !(std::isfinite(t) && std::isfinite(s)) ) {
+        return Vector3D::invalid();
+    }
 
     const Vector3D a = p1 + d1 * t;
     const Vector3D b = p2 + d2 * s;

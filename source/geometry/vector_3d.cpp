@@ -1,5 +1,5 @@
 #include "geometry/vector_3d.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -57,7 +57,9 @@ const double& Vector3D::operator[] (size_t idx) const {
 bool Vector3D::is_collinear(const Vector3D& other) const {
     assert(this->is_valid());
     assert(other.is_valid());
-    return ( (this->cross(other) ).is_zero() );
+
+    const double scale = this->length() * other.length();
+    return ( (this->cross(other) ).is_zero(scale) );
 }
 
 bool Vector3D::is_codirected(const Vector3D& other) const {
@@ -72,9 +74,9 @@ bool Vector3D::is_match(const Vector3D& other) const {
     return ((*this - other).is_zero());
 }
 
-bool Vector3D::is_zero() const {
+bool Vector3D::is_zero(double scale) const {
     assert(this->is_valid());
-    return (math::is_zero(length())) ;
+    return (math::is_zero(length(), scale)) ;
 }
 
 double Vector3D::length() const {

@@ -18,7 +18,7 @@ struct Vector3D {
     static inline Vector3D invalid() { return {NAN, NAN, NAN}; }
     
     bool is_valid     ()                      const;
-    bool is_zero      ()                      const;
+    bool is_zero      (double scale = 1.0)    const;
     bool is_collinear (const Vector3D& other) const;
     bool is_codirected(const Vector3D& other) const;
     bool is_match     (const Vector3D& other) const;

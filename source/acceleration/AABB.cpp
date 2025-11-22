@@ -2,10 +2,8 @@
 #include <cmath>
 #include <cstddef>
 
-#include "geometry/triangle.hpp"
-#include "geometry/vector_3d.hpp"
 #include "geometry/geometry.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 #include "acceleration/AABB.hpp"
 
 

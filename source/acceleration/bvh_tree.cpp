@@ -1,8 +1,6 @@
 #include "acceleration/bvh_tree.hpp"
 #include "acceleration/acceleration.hpp"
-#include "geometry/triangle.hpp"
-#include "geometry/vector_3d.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
