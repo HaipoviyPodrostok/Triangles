@@ -1,9 +1,13 @@
+#!/usr/bin/env python3
 import argparse
 import difflib
 import subprocess
 import sys
 from pathlib import Path
 from typing import Iterable
+
+
+# ---------- утилиты ----------
 
 def color(s: str, c: str, *, enable: bool) -> str:
     if not enable:
@@ -89,6 +93,7 @@ def run_one_test(
 
     stdout_ok = (got == exp)
 
+    # автообновление ключей
     if update_keys and status_ok and stderr_ok and not stdout_ok:
         expf.write_text(got_raw, encoding="utf-8")
         exp = got
@@ -101,6 +106,7 @@ def run_one_test(
             print(f"[{color('PASS', 'green', enable=use_color)}] {name}")
         return True
 
+    # что-то пошло не так
     print(f"[{color('FAIL', 'red', enable=use_color)}] {name}")
 
     if not status_ok:
@@ -192,6 +198,7 @@ def main() -> None:
     test_dir = resolve_from_cwd(args.test_dir)
     key_dir = resolve_from_cwd(args.key_dir)
 
+    # проверки путей
     if not bin_path.exists():
         print(color("ERROR: --bin does not exist: ", "red", enable=use_color) + str(bin_path))
         sys.exit(2)

@@ -6,161 +6,156 @@
 #include <cassert>
 #include <cmath>
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 namespace geometry {
 
-Section::Section(const Vector3D &a, const Vector3D &b) : a(a), b(b) {}
+Section::Section(const Vector3D& a, const Vector3D& b)
+    : a(a), b(b) { }
 
 bool Section::is_valid() const {
-  return a.is_valid() && b.is_valid() && !((a - b).is_zero());
+    return a.is_valid() &&
+           b.is_valid() &&
+           !((a - b).is_zero());
 }
 
 Line Section::get_line() const {
-  assert(this->is_valid());
-  return Line{a, b - a};
+    this->is_valid();
+    return Line{a, b - a};
 }
 
-bool Section::is_intersect(const Section &other) const {
-  assert(this->is_valid());
-  assert(other.is_valid());
+bool Section::is_intersect(const Section& other) const {    
+    assert(this->is_valid());
+    assert(other.is_valid());
+    
+    const Line l1 = this->get_line();
+    const Line l2 = other.get_line();
+    
+    if (l1.is_match(l2)) {
+        const Vector3D d = b - a;
+        
+        const double abs_x = std::fabs(d.x);
+        const double abs_y = std::fabs(d.y);
+        const double abs_z = std::fabs(d.z);
 
-  const Line l1 = this->get_line();
-  const Line l2 = other.get_line();
+        math::Axis axis = (abs_x >= abs_y && abs_x >= abs_z) ? math::Axis::X :
+                    (abs_y >= abs_z ? math::Axis::Y : math::Axis::Z);
+            
+        auto get_1d_coord = [&](const Vector3D& v) {
+            switch (axis) {
+                case math::Axis::X:
+                    return v.x;
+                case math::Axis::Y:
+                    return v.y;
+                case math::Axis::Z:
+                    return v.z;
+                default:
+                    throw std::logic_error("Invalid axis in get_1d_coord()");
+            }
+        };
+        
+        double a1 = get_1d_coord(a);       double b1 = get_1d_coord(b);
+        double a2 = get_1d_coord(other.a); double b2 = get_1d_coord(other.b);
 
-  if (l1.is_match(l2)) {
-    const Vector3D d = b - a;
+        if (a1 > b1) { std::swap(a1, b1); }
+        if (a2 > b2) { std::swap(a2, b2); }
 
-    const double abs_x = std::fabs(d.x);
-    const double abs_y = std::fabs(d.y);
-    const double abs_z = std::fabs(d.z);
+        const double left_max  = std::max(a1, a2);
+        const double right_min = std::min(b1, b2);
+        
+        const double len1  = b1 - a1;
+        const double len2  = b2 - a2;
+        
+        const double scale     = std::max(std::fabs(len1), std::fabs(len2));
+        const double scale_eps = math::get_eps(scale);
 
-    math::Axis axis = (abs_x >= abs_y && abs_x >= abs_z)
-                          ? math::Axis::X
-                          : (abs_y >= abs_z ? math::Axis::Y : math::Axis::Z);
-
-    auto get_1d_coord = [&](const Vector3D &v) {
-      switch (axis) {
-      case math::Axis::X:
-        return v.x;
-      case math::Axis::Y:
-        return v.y;
-      case math::Axis::Z:
-        return v.z;
-      default:
-        throw std::logic_error("Invalid axis in get_1d_coord()");
-      }
-    };
-
-    double a1 = get_1d_coord(a);
-    double b1 = get_1d_coord(b);
-    double a2 = get_1d_coord(other.a);
-    double b2 = get_1d_coord(other.b);
-
-    if (a1 > b1) {
-      std::swap(a1, b1);
+        return right_min + scale_eps >= left_max;
     }
-    if (a2 > b2) {
-      std::swap(a2, b2);
+
+    if (l1.is_intersect(l2)) {
+        const Vector3D p = l1.intersect_point(l2);
+        spdlog::debug("p: {}, {}, {}", p.x, p.y, p.z);
+        assert(p.is_valid());
+        return ( this->is_contains(p) && other.is_contains(p) );
+    }    
+
+    return false;
+}
+
+bool Section::is_intersect(const Line& other) const {
+    assert(this->is_valid());
+    assert(other.is_valid());
+    
+    const Line l1 = this->get_line();
+
+    if (l1.is_match(other)) {
+        return true;
     }
 
-    const double left_max = std::max(a1, a2);
-    const double right_min = std::min(b1, b2);
+    if (!l1.is_intersect(other)) {
+        return false;
+    }
 
-    const double len1 = b1 - a1;
-    const double len2 = b2 - a2;
+    const Vector3D p = l1.intersect_point(other);
+    assert(p.is_valid()); //TODO
+    if (!p.is_valid()) {
+        return false;
+    }
 
-    const double scale = std::max(std::fabs(len1), std::fabs(len2));
-    const double scale_eps = math::get_eps(scale);
+    return this->is_contains(p);
+}
 
-    return right_min + scale_eps >= left_max;
-  }
+bool Section::is_belong(const Line& line) const {
+    assert(is_valid());
+    assert(line.is_valid());
+    return line.is_contains(a) && line.is_contains(b);
+}
 
-  if (l1.is_intersect(l2)) {
-    const Vector3D p = l1.intersect_point(l2);
-    spdlog::debug("p: {}, {}, {}", p.x, p.y, p.z);
+Vector3D Section::intersect_point(const Line& line) const {
+    assert(this->is_valid());
+    assert(line.is_valid());
+    
+    if (!this->is_intersect(line)) {
+        return Vector3D::invalid();
+    }
+
+    const Line this_line = this->get_line();
+
+    if (this_line.is_match(line)) {
+        return Vector3D::invalid();
+    }
+
+    Vector3D p = this_line.intersect_point(line);
     assert(p.is_valid());
-    return (this->is_contains(p) && other.is_contains(p));
-  }
-
-  return false;
+    return p;
 }
 
-bool Section::is_intersect(const Line &other) const {
-  assert(this->is_valid());
-  assert(other.is_valid());
+double Section::length() const {
+    return (a - b).length();
+}
 
-  const Line l1 = this->get_line();
+bool Section::is_contains(const Vector3D& p) const {
+    this->is_valid();
+    p.is_valid();
 
-  if (l1.is_match(other)) {
-    return true;
-  }
+    if (!p.is_valid()) { return false; }
+    
+    const Vector3D ap = p - a;
+    const Vector3D ab = b - a;
+    const Vector3D bp = p - b;
 
-  if (!l1.is_intersect(other)) {
+    if ((ap).is_collinear(ab)) {
+        double scalar_ap_bp = ap.scalar(bp);
+        double scale        = ab.length() * ab.length();
+        return (scalar_ap_bp < 0 || math::is_zero(scalar_ap_bp, scale));
+    }
+
     return false;
-  }
-
-  const Vector3D p = l1.intersect_point(other);
-  assert(p.is_valid()); // TODO
-  if (!p.is_valid()) {
-    return false;
-  }
-
-  return this->is_contains(p);
-}
-
-bool Section::is_belong(const Line &line) const {
-  assert(is_valid());
-  assert(line.is_valid());
-  return line.is_contains(a) && line.is_contains(b);
-}
-
-Vector3D Section::intersect_point(const Line &line) const {
-  assert(this->is_valid());
-  assert(line.is_valid());
-
-  if (!this->is_intersect(line)) {
-    return Vector3D::invalid();
-  }
-
-  const Line this_line = this->get_line();
-
-  if (this_line.is_match(line)) {
-    return Vector3D::invalid();
-  }
-
-  Vector3D p = this_line.intersect_point(line);
-  assert(p.is_valid());
-  return p;
-}
-
-double Section::length() const { return (a - b).length(); }
-
-bool Section::is_contains(const Vector3D &p) const {
-  this->is_valid();
-  p.is_valid();
-
-  if (!p.is_valid()) {
-    return false;
-  }
-
-  const Vector3D ap = p - a;
-  const Vector3D ab = b - a;
-  const Vector3D bp = p - b;
-
-  if ((ap).is_collinear(ab)) {
-    double scalar_ap_bp = ap.scalar(bp);
-    double scale = ab.length() * ab.length();
-    return (scalar_ap_bp < 0 || math::is_zero(scalar_ap_bp, scale));
-  }
-
-  return false;
 }
 
 void Section::print() const {
-  std::cout << "p1 = ";
-  a.print();
-  std::cout << ", p2 = ";
-  b.print();
-  std::cout << std::endl;
+    std::cout << "p1 = ";   a.print();
+    std::cout << ", p2 = "; b.print();
+    std::cout << std::endl;
 }
-} // namespace geometry
+} // namespace geometry 

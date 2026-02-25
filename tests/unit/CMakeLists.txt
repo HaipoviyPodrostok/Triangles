@@ -10,11 +10,10 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest)
 
-add_executable(
-    geometry_test.x
+add_executable(geometry_test.x
     triangle_test.cpp
-    #plane_test.cpp
-    #section_test.cpp
+    plane_test.cpp
+    section_test.cpp
 )
 
 target_include_directories(geometry_test.x
