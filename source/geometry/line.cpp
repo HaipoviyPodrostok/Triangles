@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 #include "geometry/vector_3d.hpp"
-#include "math/math_utils.hpp"
+#include "math/math.hpp"
 
 namespace geometry {
 
@@ -68,11 +68,11 @@ bool Line::is_intersect(const Line& other) const {
 
 // -- line this:  p1 + t * d1 --
 // -- line other: p2 + s * d2 --
-Vector3D Line::intersect_point(const Line& other) const {
+std::optional<Vector3D> Line::intersect_point(const Line& other) const {
   assert(is_valid());
   assert((other.is_valid()));
   if (!this->is_intersect(other) || this->is_match(other)) {
-    return Vector3D::invalid();
+    return std::nullopt;
   }
 
   const Vector3D& p1 = origin;
@@ -88,21 +88,18 @@ Vector3D Line::intersect_point(const Line& other) const {
   const double s = ((p2 - p1).cross(d1)).scalar(n) / n_len_squared;
 
   if (!(std::isfinite(t) && std::isfinite(s))) {
-    return Vector3D::invalid();
+    return std::nullopt;
   }
 
   const Vector3D a = p1 + d1 * t;
   const Vector3D b = p2 + d2 * s;
 
-  if (math::is_zero((a - b).length())) {
-    return a;
+  double scale = std::max(std::max(a.length(), b.length()), 1.0);
+  if (math::is_zero((a - b).length(), scale)) {
+    return (a + b) * 0.5;
   }
-  spdlog::debug("===================invalid======================");
-  spdlog::debug("a: {}, {}, {}", a.x, a.y, a.z);
-  spdlog::debug("b: {}, {}, {}", b.x, b.y, b.z);
-  spdlog::debug("================================================");
 
-  return Vector3D::invalid();
+  return std::nullopt;
 }
 
 void Line::print() const {

@@ -13,23 +13,24 @@ struct Vector3D {
   double y;
   double z;
 
-  Vector3D(double x_ = NAN, double y_ = NAN, double z_ = NAN);
+  Vector3D(double x_ = NAN, double y_ = NAN, double z_ = NAN) noexcept
+      : x(x_), y(y_), z(z_) {}
 
   static inline Vector3D invalid() { return {NAN, NAN, NAN}; }
 
-  bool is_valid() const;
-  bool is_zero(double scale = 1.0) const;
-  bool is_collinear(const Vector3D& other) const;
-  bool is_codirected(const Vector3D& other) const;
-  bool is_match(const Vector3D& other) const;
+  [[nodiscard]] bool is_valid() const;
+  [[nodiscard]] bool is_zero(double scale = 1.0) const;
+  [[nodiscard]] bool is_collinear(const Vector3D& other) const;
+  [[nodiscard]] bool is_codirected(const Vector3D& other) const;
+  [[nodiscard]] bool is_match(const Vector3D& other) const;
 
-  double length() const;
-  double scalar(const Vector3D& other) const;
+  [[nodiscard]] double length() const;
+  [[nodiscard]] double scalar(const Vector3D& other) const;
 
   double& operator[](size_t idx);
   const double& operator[](size_t idx) const;
 
-  Vector3D cross(const Vector3D& other) const;
+  [[nodiscard]] Vector3D cross(const Vector3D& other) const;
 
   void print() const;
 };
