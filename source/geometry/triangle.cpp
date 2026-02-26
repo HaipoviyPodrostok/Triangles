@@ -188,9 +188,15 @@ bool Triangle::is_inside(const Vector3D& p) const {
   const double side_bc = (normal.cross(bc)).scalar(bp);
   const double side_ca = (normal.cross(ca)).scalar(cp);
 
-  return (side_ab >= -math::eps && side_bc >= -math::eps &&
-          side_ca >= -math::eps) ||
-         (side_ab <= math::eps && side_bc <= math::eps && side_ca <= math::eps);
+  double scale_ab = (normal.cross(ab)).length() * ap.length();
+  double scale_bc = (normal.cross(bc)).length() * bp.length();
+  double scale_ca = (normal.cross(ca)).length() * cp.length();
+
+  double eps_ab = math::eps * scale_ab;
+  double eps_bc = math::eps * scale_bc;
+  double eps_ca = math::eps * scale_ca;
+
+  return side_ab >= -eps_ab && side_bc >= -eps_bc && side_ca >= -eps_ca;
 }
 
 bool Triangle::is_intersect_2d(const Triangle& other) const {
