@@ -14,15 +14,15 @@ class Plane {
   [[nodiscard]] const Vector3D& get_normal() const noexcept { return normal; }
   [[nodiscard]] double get_D() const noexcept { return D; }
 
-  [[nodiscard]] bool is_valid() const;
-  [[nodiscard]] double get_distance(const Plane& other) const;
-  [[nodiscard]] bool is_match(const Plane& other) const;
-  [[nodiscard]] bool is_parallel(const Plane& other) const;
-  [[nodiscard]] bool is_contains(const Vector3D& p) const;
-  [[nodiscard]] bool is_contains(const Line& line) const;
-  [[nodiscard]] bool is_intersected(const Line& line) const;
+  [[nodiscard]] bool is_valid() const noexcept;
+  [[nodiscard]] double get_distance(const Plane& other) const noexcept;
+  [[nodiscard]] bool is_match(const Plane& other) const noexcept;
+  [[nodiscard]] bool is_parallel(const Plane& other) const noexcept;
+  [[nodiscard]] bool is_contains(const Vector3D& p) const noexcept;
+  [[nodiscard]] bool is_contains(const Line& line) const noexcept;
+  [[nodiscard]] bool is_intersected(const Line& line) const noexcept;
   [[nodiscard]] std::optional<Vector3D> get_intersect_point(
-      const Line& line) const;
+      const Line& line) const noexcept;
 
  private:
   Vector3D r;

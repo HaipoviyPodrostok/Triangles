@@ -1,22 +1,15 @@
 #pragma once
 
-#include <gtest/gtest.h>
-
 #include <cassert>
-#include <cmath>
 #include <cstddef>
 
 namespace geometry {
 
 struct Vector3D {
-  double x;
-  double y;
-  double z;
+  double x, y, z;
 
-  Vector3D(double x_ = NAN, double y_ = NAN, double z_ = NAN) noexcept
-      : x(x_), y(y_), z(z_) {}
-
-  static inline Vector3D invalid() { return {NAN, NAN, NAN}; }
+  Vector3D() = default;
+  Vector3D(double x, double y, double z) : x(x), y(y), z(z) {}
 
   [[nodiscard]] bool is_valid() const;
   [[nodiscard]] bool is_zero(double scale = 1.0) const;

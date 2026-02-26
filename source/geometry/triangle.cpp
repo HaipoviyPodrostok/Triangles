@@ -5,7 +5,6 @@
 #include <cassert>
 #include <cstddef>
 #include <iostream>
-#include <stdexcept>
 #include <vector>
 
 #include "geometry/plane.hpp"
@@ -15,19 +14,18 @@
 
 namespace geometry {
 
-Triangle::Triangle(const Vector3D& a, const Vector3D& b, const Vector3D& c)
+Triangle::Triangle(const Vector3D& a, const Vector3D& b,
+                   const Vector3D& c) noexcept
     : a(a), b(b), c(c) {
-  if (!is_valid()) {
-    throw std::invalid_argument("Triangle has invalid vertices");
-  }
-  centre = get_centre();
+  assert(a.is_valid() && b.is_valid() && c.is_valid());
+  assert(!a.is_match(b) && !b.is_match(c) && !a.is_match(c));
 };
 
-bool Triangle::is_valid() const {
+bool Triangle::is_valid() const noexcept {
   return a.is_valid() && b.is_valid() && c.is_valid();
 }
 
-void Triangle::print() const {
+void Triangle::print() const noexcept {
   std::cout << "A = ";
   a.print();
   std::cout << ", B = ";
@@ -36,16 +34,14 @@ void Triangle::print() const {
   c.print();
 }
 
-bool Triangle::is_point() const {
+bool Triangle::is_point() const noexcept {
   assert(this->is_valid());
   return (b - a).is_zero() && (c - a).is_zero();
 }
 
-bool Triangle::is_section() const {
+bool Triangle::is_section() const noexcept {
   assert(this->is_valid());
-  if (is_point()) {
-    return false;
-  }
+  if (is_point()) { return false; }
 
   const Vector3D ab = b - a;
   const Vector3D bc = c - b;
@@ -59,13 +55,11 @@ bool Triangle::is_section() const {
     return true;
   }
 
-  if ((ab.cross(ac)).is_zero(ab.length() * ac.length())) {
-    return true;
-  }
+  if ((ab.cross(ac)).is_zero(ab.length() * ac.length())) { return true; }
   return false;
 }
 
-bool Triangle::is_intersect(const Section& sec) const {
+bool Triangle::is_intersect(const Section& sec) const noexcept {
   assert(this->is_valid());
   assert(!is_point() && !is_section());
   assert(sec.is_valid());
@@ -73,9 +67,7 @@ bool Triangle::is_intersect(const Section& sec) const {
   Plane pl = this->get_plane();
   Line l = sec.get_line();
 
-  if (!pl.is_intersected(l)) {
-    return false;
-  }
+  if (!pl.is_intersected(l)) { return false; }
   if (pl.is_contains(l)) {
     return Section{a, b}.is_intersect(sec) || Section{b, c}.is_intersect(sec) ||
            Section{a, c}.is_intersect(sec) || is_inside(sec.a) ||
@@ -87,22 +79,18 @@ bool Triangle::is_intersect(const Section& sec) const {
   return sec.is_contains(x) && this->is_inside(x);
 }
 
-bool Triangle::is_intersect(const Triangle& other) const {
+bool Triangle::is_intersect(const Triangle& other) const noexcept {
   assert(this->is_valid());
   assert(other.is_valid());
 
-  if (this->is_point() && other.is_point()) {
-    return (a - other.a).is_zero();
-  }
+  if (this->is_point() && other.is_point()) { return (a - other.a).is_zero(); }
 
   auto pick_section = [](const Vector3D& a, const Vector3D& b,
                          const Vector3D& c) {
     Vector3D p = a;
     Vector3D q = b;
 
-    if ((p - q).is_zero()) {
-      q = c;
-    }
+    if ((p - q).is_zero()) { q = c; }
 
     return std::pair<Vector3D, Vector3D>{p, q};
   };
@@ -123,13 +111,9 @@ bool Triangle::is_intersect(const Triangle& other) const {
     return Section{p, q}.is_intersect(Section{m, n});
   }
 
-  if (this->is_point()) {
-    return other.is_inside(a);
-  }
+  if (this->is_point()) { return other.is_inside(a); }
 
-  if (other.is_point()) {
-    return this->is_inside(other.a);
-  }
+  if (other.is_point()) { return this->is_inside(other.a); }
 
   if (this->is_section()) {
     auto [p, q] = pick_section(a, b, c);
@@ -144,18 +128,14 @@ bool Triangle::is_intersect(const Triangle& other) const {
   const Plane first_pl = this->get_plane();
   const Plane second_pl = other.get_plane();
 
-  if (first_pl.is_match(second_pl)) {
-    return is_intersect_2d(other);
-  }
+  if (first_pl.is_match(second_pl)) { return is_intersect_2d(other); }
 
-  if (first_pl.is_parallel(second_pl)) {
-    return false;
-  }
+  if (first_pl.is_parallel(second_pl)) { return false; }
 
   return is_intersect_3d(other);
 }
 
-Plane Triangle::get_plane() const {
+Plane Triangle::get_plane() const noexcept {
   assert(this->is_valid());
   assert(!this->is_point());
   assert(!this->is_section());
@@ -168,12 +148,10 @@ Plane Triangle::get_plane() const {
   return Plane{a, normal};
 }
 
-bool Triangle::is_inside(const Vector3D& p) const {
+bool Triangle::is_inside(const Vector3D& p) const noexcept {
   assert(this->is_valid());
   assert(p.is_valid());
-  if (!this->get_plane().is_contains(p)) {
-    return false;
-  }
+  if (!this->get_plane().is_contains(p)) { return false; }
 
   const Vector3D ab = b - a;
   const Vector3D bc = c - b;
@@ -199,7 +177,7 @@ bool Triangle::is_inside(const Vector3D& p) const {
   return side_ab >= -eps_ab && side_bc >= -eps_bc && side_ca >= -eps_ca;
 }
 
-bool Triangle::is_intersect_2d(const Triangle& other) const {
+bool Triangle::is_intersect_2d(const Triangle& other) const noexcept {
   assert(this->is_valid());
   assert(other.is_valid());
   assert(this->get_plane().is_match(other.get_plane()));
@@ -224,16 +202,14 @@ bool Triangle::is_intersect_2d(const Triangle& other) const {
 
   for (size_t i = 0; i < 3; i++) {
     for (size_t j = 0; j < 3; j++) {
-      if (sides1[i]->is_intersect(*sides2[j])) {
-        return true;
-      };
+      if (sides1[i]->is_intersect(*sides2[j])) { return true; };
     }
   }
 
   return false;
 }
 
-bool Triangle::is_intersect_3d(const Triangle& other) const {
+bool Triangle::is_intersect_3d(const Triangle& other) const noexcept {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -261,9 +237,7 @@ bool Triangle::is_intersect_3d(const Triangle& other) const {
     }
   }
 
-  if (intersect_points1.size() < 2) {
-    return false;
-  }
+  if (intersect_points1.size() < 2) { return false; }
 
   const Section* sides2[3] = {&other_ab, &other_bc, &other_ca};
   std::vector<Vector3D> intersect_points2;
@@ -279,9 +253,7 @@ bool Triangle::is_intersect_3d(const Triangle& other) const {
     }
   }
 
-  if (intersect_points2.size() < 2) {
-    return false;
-  }
+  if (intersect_points2.size() < 2) { return false; }
 
   if (intersect_points1[0].is_match(intersect_points1[1])) {
     Vector3D p1 = intersect_points1[0];
@@ -307,7 +279,7 @@ bool Triangle::is_intersect_3d(const Triangle& other) const {
   return s1.is_intersect(s2);
 }
 
-Line Triangle::get_intersect_line(const Triangle& other) const {
+Line Triangle::get_intersect_line(const Triangle& other) const noexcept {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -329,7 +301,7 @@ Line Triangle::get_intersect_line(const Triangle& other) const {
   return {pl_intersect_p, dir};
 }
 
-Vector3D Triangle::get_centre() const {
+Vector3D Triangle::get_centre() const noexcept {
   assert(this->is_valid());
 
   return {(a.x + b.x + c.x) / 3.0, (a.y + b.y + c.y) / 3.0,

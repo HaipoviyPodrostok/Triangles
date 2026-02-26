@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <stdexcept>
 
 #include "math/math.hpp"
 
@@ -14,42 +13,49 @@ bool Vector3D::is_valid() const {
 }
 
 Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs) noexcept {
-  return {lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z};
+  assert(lhs.is_valid() && rhs.is_valid());
+  return Vector3D{lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z};
 }
 
 Vector3D operator-(const Vector3D& lhs, const Vector3D& rhs) noexcept {
-  return {lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z};
+  assert(lhs.is_valid() && rhs.is_valid());
+  return Vector3D{lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z};
 }
 
 Vector3D operator*(const Vector3D& v, double scalar) noexcept {
-  return {v.x * scalar, v.y * scalar, v.z * scalar};
+  assert(v.is_valid());
+  return Vector3D{v.x * scalar, v.y * scalar, v.z * scalar};
 }
 
 Vector3D operator*(double scalar, const Vector3D& v) noexcept {
-  return v * scalar;
+  assert(v.is_valid());
+  return Vector3D{v.x * scalar, v.y * scalar, v.z * scalar};
 }
 
 Vector3D operator/(const Vector3D& v, double scalar) noexcept {
-  return {v.x / scalar, v.y / scalar, v.z / scalar};
+  assert(v.is_valid() && !math::is_zero(scalar));
+  return v * (1 / scalar);
 }
 
 Vector3D operator/(double scalar, const Vector3D& v) noexcept {
-  return {scalar / v.x, scalar / v.y, scalar / v.z};
+  assert(v.is_valid() && !math::is_zero(scalar));
+  return v * (1 / scalar);
 }
 
 double& Vector3D::operator[](size_t idx) {
   assert(this->is_valid());
-  if (idx == 0) {
-    return x;
-  };
-  if (idx == 1) {
-    return y;
-  };
-  if (idx == 2) {
-    return z;
-  };
-  throw std::out_of_range("Vector3D index out of range");
-  ;
+  assert(idx < 3);
+  if (idx == 0) { return x; }
+  if (idx == 1) { return y; }
+  return z;
+}
+
+const double& Vector3D::operator[](size_t idx) const {
+  assert(this->is_valid());
+  assert(idx < 3);
+  if (idx == 0) { return x; }
+  if (idx == 1) { return y; }
+  return z;
 }
 
 bool Vector3D::is_collinear(const Vector3D& other) const {
@@ -79,7 +85,7 @@ bool Vector3D::is_zero(double scale) const {
 
 double Vector3D::length() const {
   assert(this->is_valid());
-  return (std::sqrtf(x * x + y * y + z * z));
+  return (std::sqrt(x * x + y * y + z * z));
 }
 
 double Vector3D::scalar(const Vector3D& other) const {
@@ -92,9 +98,9 @@ Vector3D Vector3D::cross(const Vector3D& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
 
-  float i = (y * other.z) - (z * other.y);
-  float j = (z * other.x) - (x * other.z);
-  float k = (x * other.y) - (y * other.x);
+  double i = (y * other.z) - (z * other.y);
+  double j = (z * other.x) - (x * other.z);
+  double k = (x * other.y) - (y * other.x);
 
   return Vector3D{i, j, k};
 }

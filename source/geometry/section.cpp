@@ -10,18 +10,22 @@
 
 namespace geometry {
 
-Section::Section(const Vector3D& a, const Vector3D& b) : a(a), b(b) {}
+Section::Section(const Vector3D& a, const Vector3D& b) : a(a), b(b) {
+  assert(a.is_valid());
+  assert(b.is_valid());
+  assert(!a.is_match(b));
+}
 
-bool Section::is_valid() const {
+bool Section::is_valid() const noexcept {
   return a.is_valid() && b.is_valid() && !((a - b).is_zero());
 }
 
-Line Section::get_line() const {
+Line Section::get_line() const noexcept {
   assert(this->is_valid());
   return Line{a, b - a};
 }
 
-bool Section::is_intersect(const Section& other) const {
+bool Section::is_intersect(const Section& other) const noexcept {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -57,12 +61,8 @@ bool Section::is_intersect(const Section& other) const {
     double a2 = get_1d_coord(other.a);
     double b2 = get_1d_coord(other.b);
 
-    if (a1 > b1) {
-      std::swap(a1, b1);
-    }
-    if (a2 > b2) {
-      std::swap(a2, b2);
-    }
+    if (a1 > b1) { std::swap(a1, b1); }
+    if (a2 > b2) { std::swap(a2, b2); }
 
     const double left_max = std::max(a1, a2);
     const double right_min = std::min(b1, b2);
@@ -78,9 +78,7 @@ bool Section::is_intersect(const Section& other) const {
 
   if (l1.is_intersect(l2)) {
     const auto opt_p = l1.intersect_point(l2);
-    if (!opt_p) {
-      return false;
-    }
+    if (!opt_p) { return false; }
     const Vector3D& p = *opt_p;
     assert(p.is_valid());
     return (this->is_contains(p) && other.is_contains(p));
@@ -89,66 +87,48 @@ bool Section::is_intersect(const Section& other) const {
   return false;
 }
 
-bool Section::is_intersect(const Line& other) const {
+bool Section::is_intersect(const Line& other) const noexcept {
   assert(this->is_valid());
   assert(other.is_valid());
 
   const Line l1 = this->get_line();
 
-  if (l1.is_match(other)) {
-    return true;
-  }
-
-  if (!l1.is_intersect(other)) {
-    return false;
-  }
+  if (l1.is_match(other)) { return true; }
+  if (!l1.is_intersect(other)) { return false; }
 
   const auto opt_p = l1.intersect_point(other);
-  if (!opt_p) {
-    return false;
-  }
-  const Vector3D& p = *opt_p;
-  assert(p.is_valid());  // TODO
-  if (!p.is_valid()) {
-    return false;
-  }
+  if (!opt_p) { return false; }
 
-  return this->is_contains(p);
+  return this->is_contains(*opt_p);
 }
 
-bool Section::is_belong(const Line& line) const {
+bool Section::is_belong(const Line& line) const noexcept {
   assert(is_valid());
   assert(line.is_valid());
   return line.is_contains(a) && line.is_contains(b);
 }
 
-std::optional<Vector3D> Section::intersect_point(const Line& line) const {
+std::optional<Vector3D> Section::intersect_point(
+    const Line& line) const noexcept {
   assert(this->is_valid());
   assert(line.is_valid());
 
-  if (!this->is_intersect(line)) {
-    return std::nullopt;
-  }
+  if (!this->is_intersect(line)) { return std::nullopt; }
 
   const Line this_line = this->get_line();
 
-  if (this_line.is_match(line)) {
-    return std::nullopt;
-  }
+  if (this_line.is_match(line)) { return std::nullopt; }
 
   return this_line.intersect_point(line);
 }
 
-double Section::length() const { return (a - b).length(); }
+double Section::length() const noexcept {
+  return (a - b).length();
+}
 
-bool Section::is_contains(const Vector3D& p) const {
+bool Section::is_contains(const Vector3D& p) const noexcept {
   assert(this->is_valid());
   assert(p.is_valid());
-
-  if (!p.is_valid()) {
-    throw std::invalid_argument(
-        "Section::is_contains recieved an invalid Vector3D");
-  }
 
   const Vector3D ap = p - a;
   const Vector3D ab = b - a;
