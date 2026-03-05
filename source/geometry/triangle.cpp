@@ -18,7 +18,6 @@ Triangle::Triangle(const Vector3D& a, const Vector3D& b,
                    const Vector3D& c) noexcept
     : a(a), b(b), c(c) {
   assert(a.is_valid() && b.is_valid() && c.is_valid());
-  assert(!a.is_match(b) && !b.is_match(c) && !a.is_match(c));
 };
 
 bool Triangle::is_valid() const noexcept {
@@ -306,5 +305,26 @@ Vector3D Triangle::get_centre() const noexcept {
 
   return {(a.x + b.x + c.x) / 3.0, (a.y + b.y + c.y) / 3.0,
           (a.z + b.z + c.z) / 3.0};
+}
+
+acceleration::AABB make_AABB(const Triangle& tri) noexcept {
+  const Vector3D min_vec{std::fmin(std::fmin(tri.a.x, tri.b.x), tri.c.x),
+                         std::fmin(std::fmin(tri.a.y, tri.b.y), tri.c.y),
+                         std::fmin(std::fmin(tri.a.z, tri.b.z), tri.c.z)};
+
+  const Vector3D max_vec{std::fmax(std::fmax(tri.a.x, tri.b.x), tri.c.x),
+                         std::fmax(std::fmax(tri.a.y, tri.b.y), tri.c.y),
+                         std::fmax(std::fmax(tri.a.z, tri.b.z), tri.c.z)};
+
+  return acceleration::AABB{min_vec, max_vec};
+}
+
+void add_tri_to_aabb(const Triangle& tri, acceleration::AABB& aabb) noexcept {
+  assert(tri.is_valid());
+  assert(aabb.is_valid());
+
+  aabb.expand(tri.a);
+  aabb.expand(tri.b);
+  aabb.expand(tri.c);
 }
 }  // namespace geometry

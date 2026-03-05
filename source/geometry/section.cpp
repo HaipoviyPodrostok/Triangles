@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <iostream>
 
 #include "geometry/line.hpp"
 #include "geometry/vector_3d.hpp"
@@ -49,10 +50,8 @@ bool Section::is_intersect(const Section& other) const noexcept {
           return v.x;
         case math::Axis::Y:
           return v.y;
-        case math::Axis::Z:
-          return v.z;
         default:
-          throw std::logic_error("Invalid axis in get_1d_coord()");
+          return v.z;
       }
     };
 

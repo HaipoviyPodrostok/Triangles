@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
 
 #include "math/math.hpp"
 

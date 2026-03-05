@@ -1,27 +1,27 @@
 #pragma once
 
-#include "geometry/geometry.hpp"
-#include "geometry/triangle.hpp"
-#include "geometry/vector_3d.hpp"
 #include <cassert>
+
+#include "geometry/vector_3d.hpp"
 
 namespace acceleration {
 
 struct AABB {
-    geometry::Vector3D min;
-    geometry::Vector3D max;
+  geometry::Vector3D min;
+  geometry::Vector3D max;
 
-    AABB(const geometry::Vector3D min_ = geometry::Vector3D{},
-         const geometry::Vector3D max_ = geometry::Vector3D{});
-    AABB(const geometry::Triangle tri);
-    
-    bool is_valid() const;
-    bool is_intersect(const AABB& other) const;
-    void expand(const geometry::Triangle& tri);
-    void merge(const AABB& other);
-    bool is_inside(const AABB& other) const;
+  AABB() = default;
+  AABB(const geometry::Vector3D min_, const geometry::Vector3D max_)
+      : min(min_), max(max_) {}
+
+  [[nodiscard]] bool is_valid() const noexcept;
+  [[nodiscard]] bool is_intersect(const AABB& other) const noexcept;
+  [[nodiscard]] bool is_inside(const AABB& other) const noexcept;
+
+  void expand(const geometry::Vector3D& p) noexcept;
+  void merge(const AABB& other) noexcept;
 };
 
-AABB merge(const AABB& a, const AABB& b);
+[[nodiscard]] AABB merge(const AABB& a, const AABB& b) noexcept;
 
-} // namespace acceleration
+}  // namespace acceleration

@@ -6,7 +6,9 @@
 namespace geometry {
 
 struct Vector3D {
-  double x, y, z;
+  double x = 0.0;
+  double y = 0.0;
+  double z = 0.0;
 
   Vector3D() = default;
   Vector3D(double x, double y, double z) : x(x), y(y), z(z) {}
