@@ -1,5 +1,6 @@
 #include "acceleration/bvh_tree.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 
@@ -47,7 +48,7 @@ std::vector<geometry::Vector3D> find_centroids(const std::vector<PolT>& input) {
   std::vector<geometry::Vector3D> centroids;
 
   for (size_t i = 0; i < input.size(); ++i) {
-    assert(input[i].is_valid);
+    assert(input[i].is_valid());
     const geometry::Vector3D centroid = input[i].get_centre();
     centroids.emplace_back(centroid);
   }
@@ -55,22 +56,54 @@ std::vector<geometry::Vector3D> find_centroids(const std::vector<PolT>& input) {
 }
 
 template <typename PolT>
-AABB BVHTree<PolT>::compute_global_box(const std::vector<PolT>& input) const {
-  geometry::Vector3D min;
-  geometry::Vector3D max;
+AABB BVHTree<PolT>::compute_global_box(
+    const std::vector<geometry::Vector3D> centroids) const {
+  if (centroids.empty()) { return AABB(); }
 
-  const std::vector<geometry::Vector3D> centroids = find_centroids(input);
+  geometry::Vector3D min = input[0];
+  geometry::Vector3D max = input[0];
 
-  for (size_t i = 0; i < centroids.size(); ++i) {
+  for (size_t i = 1; i < input.size(); ++i) {
     for (size_t j = 0; j < 3; ++j) {
-      const geometry::Vector3D centroid = centroids[i];
+      const geometry::Vector3D& centroid = centroids[i];
+
       if (centroid[j] < min[j]) { min[j] = centroid[j]; }
       if (centroid[j] > max[j]) { max[j] = centroid[j]; }
     }
   }
-
   return {min, max};
 }
+
+namespace {
+
+[[nodiscard]] uint32_t expand_bits(uint32_t v) noexcept {
+  v &= 0x000003ff;
+
+  v = (v | (v << 16)) & 0x030000ff;
+  v = (v | (v << 8)) & 0x0300f00f;
+  v = (v | (v << 4)) & 0x030c30c3;
+  v = (v | (v << 2)) & 0x09249249;
+  return v;
+}
+
+[[nodiscard]] uint32_t get_morton_code(const geometry::Vector3D& centroid,
+                                       const acceleration::AABB& box) {
+  const double x_gap = std::max(box.max.x - box.min.x, 1e-9);
+  const double y_gap = std::max(box.max.y - box.min.y, 1e-9);
+  const double z_gap = std::max(box.max.z - box.min.z, 1e-9);
+
+  const double norm_x = ((centroid.x - box.min.x) / x_gap) * 1024;
+  const double norm_y = ((centroid.y - box.min.y) / y_gap) * 1024;
+  const double norm_z = ((centroid.z - box.min.z) / z_gap) * 1024;
+
+  uint32_t ix = static_cast<uint32_t>(std::clamp(norm_x, 0.0, 1023.0));
+  uint32_t iy = static_cast<uint32_t>(std::clamp(norm_y, 0.0, 1023.0));
+  uint32_t iz = static_cast<uint32_t>(std::clamp(norm_y, 0.0, 1023.0));
+
+  return expand_bits(ix) | (expand_bits(iy) << 1) | (expand_bits(iz) << 2);
+}  // namespace
+
+}  // namespace acceleration
 
 // BVHTree::BVHTree(std::vector<geometry::Triangle>& input) : triangles(input) {
 //   if (input.size() < 2) {
@@ -224,8 +257,6 @@ AABB BVHTree<PolT>::compute_global_box(const std::vector<PolT>& input) const {
 //   return dump_file;
 // }
 // #endif  // ENABLE_BVH_DEBUG
-
-}  // namespace acceleration
 
 // geometry::Vector3D node_box_min = nodes[idx].box.min;
 // geometry::Vector3D node_box_max = nodes[idx].box.max;

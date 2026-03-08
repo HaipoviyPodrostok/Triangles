@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -40,18 +41,20 @@ struct BVHNode {
 template <typename PolT>
 class BVHTree {
  public:
-  explicit BVHTree<PolT>(std::vector<PolT>& input) : input(input) {}
+  explicit BVHTree<PolT>(std::vector<PolT>& input) : input(input) {
+    centroids = find_centroids(input);
+  }
 
-  AABB compute_global_box(const std::vector<PolT>& input) const;
+  AABB compute_global_box(
+      const std::vector<geometry::Vector3D> centroids) const;
 
  private:
   std::vector<BVHNode> nodes;
   std::vector<PolT>& input;
+  std::vector<geometry::Vector3D> centroids;
 };
 
-template <typename PolT>
-[[nodiscard]] std::vector<geometry::Vector3D> find_centroids(
-    const std::vector<PolT>& input);
+uint32_t morton_3d(const geometry::Vector3D&);
 
 // class BVHTree {
 // //  public:
