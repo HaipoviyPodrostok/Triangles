@@ -1,12 +1,90 @@
 #include "acceleration/bvh_tree.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <cassert>
 #include <cstddef>
 
 #include "acceleration/acceleration.hpp"
 
 namespace acceleration {
+
+namespace {
+
+[[nodiscard]] uint32_t expand_bits(uint32_t v) noexcept {
+  v &= 0x000003ff;
+
+  v = (v | (v << 16)) & 0x030000ff;
+  v = (v | (v << 8)) & 0x0300f00f;
+  v = (v | (v << 4)) & 0x030c30c3;
+  v = (v | (v << 2)) & 0x09249249;
+  return v;
+}
+
+// [[nodiscard]] size_t find_common_pref(const size_t a, const size_t b) {
+//   const uint32_t xor_val = a ^ b;
+
+//   if (xor_val == 0) { return 32; }
+
+// #if defined(__GNUC__) || defined(__clang__)
+//   return __builtin_clz(xor_val);
+// #elif defined(_MSC_VER)
+//   unsigned long index;
+//   _BitScanReverse(&index, xor_val);
+//   return 31 - static_cast<size_t>(index);
+// #else
+//   int n = 0;
+//   if ((xor_val & 0xFFFF0000) == 0) {
+//     n += 16;
+//     xor_val <<= 16;
+//   }
+//   if ((xor_val & 0xFF000000) == 0) {
+//     n += 8;
+//     xor_val <<= 8;
+//   }
+//   if ((xor_val & 0xF0000000) == 0) {
+//     n += 4;
+//     xor_val <<= 4;
+//   }
+//   if ((xor_val & 0xC0000000) == 0) {
+//     n += 2;
+//     xor_val <<= 2;
+//   }
+//   if ((xor_val & 0x80000000) == 0) { n += 1; }
+//   return n;
+// #endif
+// }
+
+[[nodiscard]] size_t find_split(const std::vector<uint32_t>& morton_codes,
+                                const size_t first, const size_t last) {
+  const uint32_t first_code = morton_codes[first];
+  const uint32_t last_code = morton_codes[last];
+
+  if (first_code == last_code) { return (first + last) >> 1; }
+
+#ifdef USE_OPENCL
+  const size_t common_prefix = clz(first_code ^ last_code);
+#endif
+
+#ifndef USE_OPENCL
+  const size_t common_prefix = std::countl_zero(first_code ^ last_code);
+#endif
+
+  size_t split = first;
+  size_t step = last - first;
+
+  do {
+    step = (step + 1) >> 1;
+    const size_t new_split = split + step;
+
+    if (new_split < last) {
+      const uint32_t split_code = morton_codes[new_split];
+#ifndef USE_OPENCL
+      const size_t split_prefix =
+    }
+  }
+}
+}  // namespace
 
 BVHNode::BVHNode(const AABB& box_, const size_t first_, const size_t n_objs_)
     : box(box_), start(first_), n_objs(n_objs_) {
@@ -74,34 +152,37 @@ AABB BVHTree<PolT>::compute_global_box(
   return {min, max};
 }
 
-namespace {
-
-[[nodiscard]] uint32_t expand_bits(uint32_t v) noexcept {
-  v &= 0x000003ff;
-
-  v = (v | (v << 16)) & 0x030000ff;
-  v = (v | (v << 8)) & 0x0300f00f;
-  v = (v | (v << 4)) & 0x030c30c3;
-  v = (v | (v << 2)) & 0x09249249;
-  return v;
-}
-
-[[nodiscard]] uint32_t get_morton_code(const geometry::Vector3D& centroid,
-                                       const acceleration::AABB& box) {
+[[nodiscard]] std::vector<uint32_t> get_morton_code(
+    const std::vector<geometry::Vector3D>& centroids,
+    const acceleration::AABB& box) {
   const double x_gap = std::max(box.max.x - box.min.x, 1e-9);
   const double y_gap = std::max(box.max.y - box.min.y, 1e-9);
   const double z_gap = std::max(box.max.z - box.min.z, 1e-9);
 
-  const double norm_x = ((centroid.x - box.min.x) / x_gap) * 1024;
-  const double norm_y = ((centroid.y - box.min.y) / y_gap) * 1024;
-  const double norm_z = ((centroid.z - box.min.z) / z_gap) * 1024;
+  std::vector<uint32_t> morton_codes;
 
-  uint32_t ix = static_cast<uint32_t>(std::clamp(norm_x, 0.0, 1023.0));
-  uint32_t iy = static_cast<uint32_t>(std::clamp(norm_y, 0.0, 1023.0));
-  uint32_t iz = static_cast<uint32_t>(std::clamp(norm_y, 0.0, 1023.0));
+  for (size_t i = 0; i < centroids.size(); ++i) {
+    const double norm_x =
+        ((centroids[i].x - box.min.x) / x_gap) * grid_resolution;
+    const double norm_y =
+        ((centroids[i].y - box.min.y) / y_gap) * grid_resolution;
+    const double norm_z =
+        ((centroids[i].z - box.min.z) / z_gap) * grid_resolution;
 
-  return expand_bits(ix) | (expand_bits(iy) << 1) | (expand_bits(iz) << 2);
-}  // namespace
+    uint32_t ix = static_cast<uint32_t>(
+        std::clamp(norm_x, 0.0, static_cast<double>(grid_resolution - 1)));
+    uint32_t iy = static_cast<uint32_t>(
+        std::clamp(norm_y, 0.0, static_cast<double>(grid_resolution - 1)));
+    uint32_t iz = static_cast<uint32_t>(
+        std::clamp(norm_z, 0.0, static_cast<double>(grid_resolution - 1)));
+
+    const uint32_t morton_code =
+        (expand_bits(ix) << 2) | (expand_bits(iy) << 1) | (expand_bits(iz));
+    morton_codes.push_back(morton_code);
+  }
+
+  return morton_codes;
+}
 
 }  // namespace acceleration
 

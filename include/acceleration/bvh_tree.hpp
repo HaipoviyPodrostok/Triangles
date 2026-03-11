@@ -10,6 +10,8 @@ namespace acceleration {
 
 inline constexpr size_t max_leaf_capacity = 4;
 inline constexpr size_t tree_max_depth = 64;
+inline constexpr size_t morton_code_size = 32;
+inline constexpr size_t grid_resolution = 1024;
 
 #define ENABLE_BVH_DEBUG
 
@@ -42,7 +44,7 @@ template <typename PolT>
 class BVHTree {
  public:
   explicit BVHTree<PolT>(std::vector<PolT>& input) : input(input) {
-    centroids = find_centroids(input);
+    morton_codes = get_m(input);
   }
 
   AABB compute_global_box(
@@ -51,7 +53,7 @@ class BVHTree {
  private:
   std::vector<BVHNode> nodes;
   std::vector<PolT>& input;
-  std::vector<geometry::Vector3D> centroids;
+  std::vector<uint32_t> morton_codes;
 };
 
 uint32_t morton_3d(const geometry::Vector3D&);

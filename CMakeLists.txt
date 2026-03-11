@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 3.14)
 project("triangles")
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 enable_testing()
+
+option(USE_OPENCL "Enable OpenCL GPU acceleration" ON)
+
+if(USE_OPENCL)
+    find_package(OpenCL REQUIRED)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
 
@@ -17,6 +26,10 @@ SET(SRCS
 
 add_library(triangles_lib STATIC ${SRCS})
 target_include_directories(triangles_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
+if(USE_OPENCL)
+    target_link_libraries(triangles_lib PUBLIC OpenCL::OpenCL)
+    target_compile_definitions(triangles_lib PUBLIC USE_OPENCL)
+endif()
 
 add_executable(triangles.x main.cpp)
 target_link_libraries(triangles.x PRIVATE triangles_lib)
