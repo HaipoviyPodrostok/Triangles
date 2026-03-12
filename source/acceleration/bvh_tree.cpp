@@ -4,12 +4,108 @@
 #include <bit>
 #include <cassert>
 #include <cstddef>
+#include <fstream>
+#include <iostream>
+
+#ifdef USE_OPENCL
+#include <CL/opencl.h>
+#endif  // USE_OPENCL
 
 #include "acceleration/acceleration.hpp"
 
 namespace acceleration {
 
 namespace {
+
+#ifdef USE_OPENCL
+std::optional<std::vector<int>> find_split_cpu(
+    const std::vector<uint32_t>& morton_codes) noexcept {
+  cl_int err;
+
+  cl_platform_id platform;
+  clGetPlatformIDs(1, &platform, NULL);
+
+  cl_device_id device;
+  clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+
+  cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
+  cl_command_queue queue =
+      clCreateCommandQueueWithProperties(context, device, 0, &err);
+
+  std::ifstream file(opencl_file);
+  std::string source_code((std::istreambuf_iterator<char>(file)),
+                          std::istreambuf_iterator<char>());
+  const char* source_str = source_code.c_str();
+  const size_t source_size = source_code.length();
+
+  cl_program program =
+      clCreateProgramWithSource(context, 1, &source_str, &source_size, &err);
+  err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+
+  if (err == CL_BUILD_PROGRAM_FAILURE) {
+    size_t log_size;
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL,
+                          &log_size);
+    std::vector<char> build_log(log_size);
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size,
+                          build_log.data(), NULL);
+    std::cerr << "Build log:\n" << build_log.data() << std::endl;
+    return std::nullopt;
+  }
+
+  cl_kernel kernel = clCreateKernel(program, "find_splits", &err);
+
+  const size_t num_objects = morton_codes.size();
+  if (num_objects > static_cast<size_t>(std::numeric_limits<int>::max())) {
+    std::cerr << "BVH Build GPU Error: Number of objects exceeds maximum "
+                 "allowed value for 32-bit GPU index (2,147,483,647)."
+              << std::endl;
+    return std::nullopt;
+  }
+
+  const size_t bytes = num_objects * (morton_code_size / 8);
+
+  cl_mem d_morton_codes =
+      clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes,
+                     const_cast<uint32_t*>(morton_codes.data()), &err);
+  cl_mem d_splits =
+      clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, &err);
+
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_morton_codes);
+  clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_splits);
+  const int num_obj_int = static_cast<int>(num_objects);
+  clSetKernelArg(kernel, 2, sizeof(int), &num_obj_int);
+
+  const size_t global_work_size = num_objects - 1;
+  clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_work_size, NULL, 0,
+                         NULL, NULL);
+
+  std::vector<int> out_splits(num_objects);
+  clEnqueueReadBuffer(queue, d_splits, CL_TRUE, 0, bytes, out_splits.data(), 0,
+                      NULL, NULL);
+
+  clReleaseMemObject(d_splits);
+  clReleaseMemObject(d_morton_codes);
+  clReleaseKernel(kernel);
+  clReleaseProgram(program);
+  clReleaseCommandQueue(queue);
+  clReleaseContext(context);
+
+  return out_splits;
+}
+
+// #else
+std::vector<int> find_split_cpu(const std::vector<uint32_t>& morton_codes,
+                                const size_t first,
+                                const size_t last) noexcept {
+  const uint32_t first_code = morton_codes[first];
+  const uint32_t last_code = morton_codes[last];  // TODO мб инт
+
+  if (first_code == last_code) { return (first + last) >> 1; }
+  size_t common_prefix = std::countl_zero(first_code ^ last_code) a;
+}
+
+#endif  // USE_OPENCL
 
 [[nodiscard]] uint32_t expand_bits(uint32_t v) noexcept {
   v &= 0x000003ff;
@@ -62,27 +158,26 @@ namespace {
 
   if (first_code == last_code) { return (first + last) >> 1; }
 
-#ifdef USE_OPENCL
-  const size_t common_prefix = clz(first_code ^ last_code);
-#endif
+  // #ifdef USE_OPENCL
+  //   const size_t common_prefix = clz(first_code ^ last_code);
+  // #endif
 
-#ifndef USE_OPENCL
-  const size_t common_prefix = std::countl_zero(first_code ^ last_code);
-#endif
+  // #ifndef USE_OPENCL
+  //   const size_t common_prefix = std::countl_zero(first_code ^ last_code);
+  // #endif
 
-  size_t split = first;
-  size_t step = last - first;
+  //   size_t split = first;
+  //   size_t step = last - first;
 
-  do {
-    step = (step + 1) >> 1;
-    const size_t new_split = split + step;
+  //   do {
+  //     step = (step + 1) >> 1;
+  //     const size_t new_split = split + step;
 
-    if (new_split < last) {
-      const uint32_t split_code = morton_codes[new_split];
-#ifndef USE_OPENCL
-      const size_t split_prefix =
-    }
-  }
+  //     if (new_split < last) {
+  //       const uint32_t split_code = morton_codes[new_split];
+  //       const size_t split_prefix =
+  //     }
+  //   }
 }
 }  // namespace
 
@@ -119,37 +214,6 @@ void BVHNode::init_internal(const AABB& box_, const int left_idx_,
   n_objs = 0;
   left_idx = left_idx_;
   right_idx = right_idx_;
-}
-
-template <typename PolT>
-std::vector<geometry::Vector3D> find_centroids(const std::vector<PolT>& input) {
-  std::vector<geometry::Vector3D> centroids;
-
-  for (size_t i = 0; i < input.size(); ++i) {
-    assert(input[i].is_valid());
-    const geometry::Vector3D centroid = input[i].get_centre();
-    centroids.emplace_back(centroid);
-  }
-  return centroids;
-}
-
-template <typename PolT>
-AABB BVHTree<PolT>::compute_global_box(
-    const std::vector<geometry::Vector3D> centroids) const {
-  if (centroids.empty()) { return AABB(); }
-
-  geometry::Vector3D min = input[0];
-  geometry::Vector3D max = input[0];
-
-  for (size_t i = 1; i < input.size(); ++i) {
-    for (size_t j = 0; j < 3; ++j) {
-      const geometry::Vector3D& centroid = centroids[i];
-
-      if (centroid[j] < min[j]) { min[j] = centroid[j]; }
-      if (centroid[j] > max[j]) { max[j] = centroid[j]; }
-    }
-  }
-  return {min, max};
 }
 
 [[nodiscard]] std::vector<uint32_t> get_morton_code(

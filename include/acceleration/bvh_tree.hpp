@@ -10,10 +10,12 @@ namespace acceleration {
 
 inline constexpr size_t max_leaf_capacity = 4;
 inline constexpr size_t tree_max_depth = 64;
-inline constexpr size_t morton_code_size = 32;
+inline constexpr size_t morton_code_size = 32;  // bits
 inline constexpr size_t grid_resolution = 1024;
 
-#define ENABLE_BVH_DEBUG
+#ifdef USE_OPENCL
+inline const std::string opencl_file = "source/acceleration/kernels/lbvh.cl";
+#endif  // USE_OPENCL
 
 #ifdef ENABLE_BVH_DEBUG
 inline const std::string default_dump_folder = "./dumps";
@@ -43,12 +45,16 @@ struct BVHNode {
 template <typename PolT>
 class BVHTree {
  public:
-  explicit BVHTree<PolT>(std::vector<PolT>& input) : input(input) {
-    morton_codes = get_m(input);
+  explicit BVHTree(std::vector<PolT>& input) : input(input) {
+    const std::vector<geometry::Vector3D> centroids = find_centroids();
+    morton_codes = get_morton_code(centroids, compute_global_box(centroids));
   }
 
-  AABB compute_global_box(
-      const std::vector<geometry::Vector3D> centroids) const;
+  [[nodiscard]] AABB compute_global_box(
+      const std::vector<geometry::Vector3D> centroids) const noexcept;
+
+  [[nodiscard]] std::vector<geometry::Vector3D> find_centroids(
+      const std::vector<PolT>& input) const noexcept;
 
  private:
   std::vector<BVHNode> nodes;
@@ -56,7 +62,37 @@ class BVHTree {
   std::vector<uint32_t> morton_codes;
 };
 
-uint32_t morton_3d(const geometry::Vector3D&);
+template <typename PolT>
+std::vector<geometry::Vector3D> BVHTree<PolT>::find_centroids(
+    const std::vector<PolT>& input) const noexcept {
+  std::vector<geometry::Vector3D> centroids;
+
+  for (size_t i = 0; i < input.size(); ++i) {
+    assert(input[i].is_valid());
+    const geometry::Vector3D centroid = input[i].get_centre();
+    centroids.emplace_back(centroid);
+  }
+  return centroids;
+}
+
+template <typename PolT>
+[[nodiscard]] AABB BVHTree<PolT>::compute_global_box(
+    const std::vector<geometry::Vector3D> centroids) const noexcept {
+  if (centroids.empty()) { return AABB(); }
+
+  geometry::Vector3D min = input[0];
+  geometry::Vector3D max = input[0];
+
+  for (size_t i = 1; i < input.size(); ++i) {
+    for (size_t j = 0; j < 3; ++j) {
+      const geometry::Vector3D& centroid = centroids[i];
+
+      if (centroid[j] < min[j]) { min[j] = centroid[j]; }
+      if (centroid[j] > max[j]) { max[j] = centroid[j]; }
+    }
+  }
+  return {min, max};
+}
 
 // class BVHTree {
 // //  public:
