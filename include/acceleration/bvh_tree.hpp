@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -25,8 +26,8 @@ inline const std::string counter_file_name = "./dumps/counter_file.txt";
 struct BVHNode {
   AABB box;
 
-  int left_idx = -1;
-  int right_idx = -1;
+  int32_t left_idx = -1;
+  int32_t right_idx = -1;
 
   size_t start = 0;
   size_t n_objs = 0;
@@ -50,16 +51,22 @@ class BVHTree {
     morton_codes = get_morton_code(centroids, compute_global_box(centroids));
   }
 
+  void build() noexcept;
+
   [[nodiscard]] AABB compute_global_box(
       const std::vector<geometry::Vector3D> centroids) const noexcept;
 
   [[nodiscard]] std::vector<geometry::Vector3D> find_centroids(
       const std::vector<PolT>& input) const noexcept;
 
+  void sort_input() noexcept;
+
  private:
   std::vector<BVHNode> nodes;
   std::vector<PolT>& input;
   std::vector<uint32_t> morton_codes;
+
+  void build_gpu() noexcept;
 };
 
 template <typename PolT>
@@ -92,6 +99,37 @@ template <typename PolT>
     }
   }
   return {min, max};
+}
+
+template <typename PolT>
+void BVHTree<PolT>::sort_input() noexcept {
+  const size_t num_obj = input.size();
+  if (num_obj == 0) return;
+
+  std::vector<std::pair<uint32_t, uint32_t>> morton_pairs;
+  morton_pairs.reserve(num_obj);
+
+  for (size_t i = 0; i < input.size(); ++i) {
+    morton_pairs.emplace_back(morton_codes[i], i);
+  }
+
+  std::sort(morton_pairs.begin(), morton_pairs.end());
+
+  std::vector<PolT> sorted_input;
+  sorted_input.reserve(num_obj);
+  std::vector<uint32_t> sorted_codes;
+  sorted_codes.reserve(num_obj);
+
+  for (size_t i = 0; i < num_obj; ++i) {
+    const uint32_t original_index = morton_pairs[i].second;
+
+    sorted_codes.push_back(morton_pairs[i].first);
+    sorted_input.push_back(std::move(input[original_index]));
+  }
+
+  morton_codes = std::move(sorted_codes);
+  input = std::move(sorted_input);
+}
 }
 
 // class BVHTree {
