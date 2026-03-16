@@ -6,6 +6,8 @@
 
 #include "acceleration/bvh_tree.hpp"
 
+namespace acceleration {
+
 namespace {
 struct CLContext {
   cl_context context = nullptr;
@@ -102,12 +104,12 @@ std::optional<SplitInfo> run_find_splits(
   std::vector<int32_t> begins(num_nodes);
   std::vector<int32_t> ends(num_nodes);
 
-  clEnqueueReadBuffer(cl.queue, d_splits, CL_TRUE, 0, bytes, out_splits.data(),
+  clEnqueueReadBuffer(cl.queue, d_splits, CL_TRUE, 0, bytes_out,
+                      out_splits.data(), 0, NULL, NULL);
+  clEnqueueReadBuffer(cl.queue, d_begins, CL_TRUE, 0, bytes_out, begins.data(),
                       0, NULL, NULL);
-  clEnqueueReadBuffer(cl.queue, d_begins, CL_TRUE, 0, bytes, begins.data(), 0,
+  clEnqueueReadBuffer(cl.queue, d_ends, CL_TRUE, 0, bytes_out, ends.data(), 0,
                       NULL, NULL);
-  clEnqueueReadBuffer(cl.queue, d_ends, CL_TRUE, 0, bytes, ends.data(), 0, NULL,
-                      NULL);
 
   clReleaseMemObject(d_splits);
   clReleaseMemObject(d_begins);
@@ -120,14 +122,14 @@ std::optional<SplitInfo> run_find_splits(
 
 }  // namespace
 
-namespace acceleration {
 template <typename PolT>
 void acceleration::BVHTree<PolT>::build_gpu() noexcept {
+  // TODO если не при коснтрукторе считаются коды мортона то здесь
   CLContext cl = init_opencl();
-
-  // ... работаем ...
+  std::optional<SplitInfo> split_info = run_find_splits(cl, morton_codes);
+  cleanup_opencl(cl);
 }
-// Не забываем инстанцирование в конце
+
 template class acceleration::BVHTree<geometry::Triangle>;
 #endif
 }  // acceleration

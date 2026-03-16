@@ -4,17 +4,22 @@ project("triangles")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-enable_testing()
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(TRIANGLES_STANDALONE ON)
+else()
+    set(TRIANGLES_STANDALONE OFF)
+endif()
 
 option(USE_OPENCL "Enable OpenCL GPU acceleration" ON)
+option(ENABLE_LOGS "Enable spdlog logging" ON)
 
 if(USE_OPENCL)
     find_package(OpenCL REQUIRED)
 endif()
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-SET(SRCS
+set(SRCS
     source/geometry/vector_3d.cpp
     source/geometry/line.cpp
     source/geometry/section.cpp
@@ -25,36 +30,39 @@ SET(SRCS
 )
 
 add_library(triangles_lib STATIC ${SRCS})
-target_include_directories(triangles_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(triangles_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 if(USE_OPENCL)
     target_link_libraries(triangles_lib PUBLIC OpenCL::OpenCL)
     target_compile_definitions(triangles_lib PUBLIC USE_OPENCL)
 endif()
 
-add_executable(triangles.x main.cpp)
-target_link_libraries(triangles.x PRIVATE triangles_lib)
-
-include(CTest)
-if (BUILD_TESTING)
-    add_subdirectory(tests/unit)
-
-    find_package(Python3 COMPONENTS Interpreter REQUIRED)
-    add_test(NAME end2end
-             COMMAND ${Python3_EXECUTABLE}
-                     ${CMAKE_SOURCE_DIR}/tests/end2end/run.py
-                     -b $<TARGET_FILE:triangles.x>
-    )
-    set_tests_properties(end2end PROPERTIES LABELS "e2e"
-                         TEST_PREFIX "e2e:"
-    )
-endif()
-
-option(ENABLE_LOGS "Enable spdlog logging" ON)
-
-if (ENABLE_LOGS)
+if(ENABLE_LOGS)
     find_package(spdlog REQUIRED)
     target_link_libraries(triangles_lib PRIVATE spdlog::spdlog)
     target_compile_definitions(triangles_lib PRIVATE ENABLE_LOGGING)
+endif()
+
+if(TRIANGLES_STANDALONE)
+    enable_testing()
+
+    add_executable(triangles.x main.cpp)
+    target_link_libraries(triangles.x PRIVATE triangles_lib)
+
+    include(CTest)
+    if(BUILD_TESTING)
+        add_subdirectory(tests/unit)
+
+        find_package(Python3 COMPONENTS Interpreter REQUIRED)
+        add_test(NAME end2end
+                 COMMAND ${Python3_EXECUTABLE}
+                         ${CMAKE_SOURCE_DIR}/tests/end2end/run.py
+                         -b $<TARGET_FILE:triangles.x>
+        )
+        set_tests_properties(end2end PROPERTIES LABELS "e2e"
+                             TEST_PREFIX "e2e:"
+        )
+    endif()
 endif()
 
 
