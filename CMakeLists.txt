@@ -19,18 +19,23 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(SRCS
+set(GEOMETRY_SRCS
     source/geometry/vector_3d.cpp
     source/geometry/line.cpp
     source/geometry/section.cpp
     source/geometry/plane.cpp
     source/geometry/triangle.cpp
+)
+add_library(geometry_lib STATIC ${GEOMETRY_SRCS})
+target_include_directories(geometry_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+set(ACCEL_SRCS
     source/acceleration/AABB.cpp
     source/acceleration/bvh_tree.cpp
 )
-
-add_library(triangles_lib STATIC ${SRCS})
+add_library(triangles_lib STATIC ${ACCEL_SRCS})
 target_include_directories(triangles_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(triangles_lib PUBLIC geometry_lib)
 
 if(USE_OPENCL)
     target_link_libraries(triangles_lib PUBLIC OpenCL::OpenCL)
