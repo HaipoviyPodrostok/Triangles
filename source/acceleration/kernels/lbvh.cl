@@ -17,6 +17,8 @@ inline int get_common_prefix(__global const uint* codes, const int i,
 
 __kernel void find_splits(__global const uint* sorted_morton_codes,
                           __global int* out_splits,
+                          __global int* starts,
+                          __global int* n_objs,
                           const int num_objects) {
   const int idx = get_global_id(0);
   
@@ -56,8 +58,12 @@ __kernel void find_splits(__global const uint* sorted_morton_codes,
   } while (step > 1);
   
   const int split = idx + s * d + min(d, 0);
+  const int start = min(edge, idx);
+  const int end   = max(edge, idx);
   
   out_splits[idx] = split;
+  starts[idx]     = start;
+  n_objs[idx]     = end - start + 1;
 }
 
 // __kernel void compute_morton_codes(

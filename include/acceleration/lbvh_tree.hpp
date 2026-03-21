@@ -43,29 +43,30 @@ struct BVHNode {
                      const int right_idx_);
 };
 
-template <typename ObjT>
+template <typename PolT>
 class BVHTree {
  public:
-  explicit BVHTree(std::vector<ObjT>& input) : input(input) { build(); }
+  explicit BVHTree(std::vector<PolT>& input) : input(input) { build(); }
 
-  void build();
+  void build() noexcept;
+
+  [[nodiscard]] AABB compute_global_box(
+      const std::vector<geometry::Vector3D> centroids) const noexcept;
+
+  [[nodiscard]] std::vector<geometry::Vector3D> find_centroids(
+      const std::vector<PolT>& input) const noexcept;
+
+  void sort_input() noexcept;
 
  private:
   std::vector<BVHNode> nodes;
-  std::vector<ObjT>& input;
+  std::vector<PolT>& input;
   std::vector<uint32_t> morton_codes;
-
-#ifdef USE_OPENCL
-  [[nodiscard]] std::vector<geometry::Vector3D> find_centroids();
-  [[nodiscard]] AABB compute_global_box(
-      const std::vector<geometry::Vector3D> centroids);
-  void sort_input();
-#endif
 };
 
-template <typename ObjT>
-std::vector<geometry::Vector3D> find_centroids(
-    const std::vector<ObjT>& input) noexcept {
+template <typename PolT>
+std::vector<geometry::Vector3D> BVHTree<PolT>::find_centroids(
+    const std::vector<PolT>& input) const noexcept {
   std::vector<geometry::Vector3D> centroids;
 
   for (size_t i = 0; i < input.size(); ++i) {
@@ -76,30 +77,9 @@ std::vector<geometry::Vector3D> find_centroids(
   return centroids;
 }
 
-#ifdef USE_OPENCL
-namespace detail {
-
-struct SplitInfo {
-  std::vector<int32_t> splits;
-  std::vector<int32_t> starts;
-  std::vector<int32_t> n_objs;
-};
-
-[[nodiscard]] std::optional<SplitInfo> get_split_info(
-    const std::vector<uint32_t>& morton_codes);
-
-void fill_node_vec(std::vector<BVHNode>& nodes, const SplitInfo& split_info);
-
-[[nodiscard]] std::vector<uint32_t> get_morton_code(
-    const std::vector<geometry::Vector3D>& centroids,
-    const acceleration::AABB& box);
-
-}  // namespace detail
-
-template <typename ObjT>
-[[nodiscard]] AABB compute_global_box(
-    const std::vector<ObjT>& input,
-    const std::vector<geometry::Vector3D> centroids) noexcept {
+template <typename PolT>
+[[nodiscard]] AABB BVHTree<PolT>::compute_global_box(
+    const std::vector<geometry::Vector3D> centroids) const noexcept {
   if (centroids.empty()) { return AABB(); }
 
   geometry::Vector3D min = input[0];
@@ -116,8 +96,8 @@ template <typename ObjT>
   return {min, max};
 }
 
-template <typename ObjT>
-void BVHTree<ObjT>::sort_input() {
+template <typename PolT>
+void BVHTree<PolT>::sort_input() noexcept {
   const size_t num_obj = input.size();
   if (num_obj == 0) return;
 
@@ -130,7 +110,7 @@ void BVHTree<ObjT>::sort_input() {
 
   std::sort(morton_pairs.begin(), morton_pairs.end());
 
-  std::vector<ObjT> sorted_input;
+  std::vector<PolT> sorted_input;
   sorted_input.reserve(num_obj);
   std::vector<uint32_t> sorted_codes;
   sorted_codes.reserve(num_obj);
@@ -146,24 +126,24 @@ void BVHTree<ObjT>::sort_input() {
   input = std::move(sorted_input);
 }
 
+#ifdef USE_OPENCL
+namespace gpu {
+void get_split_info(const std::vector<uint32_t>& morton_codes) noexcept;
+}  // namespace gpu
 #endif
 
-template <typename ObjT>
-void BVHTree<ObjT>::build() {
-  const std::vector<geometry::Vector3D> centroids = find_centroids<ObjT>(input);
+[[nodiscard]] std::vector<uint32_t> get_morton_code(
+    const std::vector<geometry::Vector3D>& centroids,
+    const acceleration::AABB& box);
 
-#ifdef USE_OPENCL
-  const AABB global_box = compute_global_box<ObjT>(input, centroids);
+template <typename PolT>
+void BVHTree<PolT>::build() noexcept {
+  const std::vector<geometry::Vector3D> centroids = this->find_centroids();
+  const AABB global_box = this->compute_global_box(centroids);
   const std::vector<uint32_t> morton_codes =
-      detail::get_morton_code(centroids, global_box);
-  sort_input<ObjT>(input, morton_codes);
-
-  std::optional<detail::SplitInfo> split_info =
-      detail::get_split_info(morton_codes);
-  if (split_info.has_value()) {
-    detail::fill_node_vec(nodes, split_info.value());
-  }
-
+      get_morton_code(centroids, global_box);
+#ifdef USE_OPENCL
+  gpu::get_split_info(morton_codes);
 #else
   build_cpu();
 #endif

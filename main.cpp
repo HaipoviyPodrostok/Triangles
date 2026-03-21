@@ -7,7 +7,8 @@
 #include <ostream>
 #include <vector>
 
-// #include "acceleration/bvh_tree.hpp"  // IWYU pragma: export
+#include "acceleration/bvh_tree.hpp"  // IWYU pragma: export
+#include "geometry/geometry.hpp"
 
 using namespace geometry;
 
