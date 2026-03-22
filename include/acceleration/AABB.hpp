@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "geometry/vector_3d.hpp"
+#include "geometry/geometry.hpp"
 
 namespace acceleration {
 
@@ -13,6 +13,7 @@ struct AABB {
   AABB() = default;
   AABB(const geometry::Vector3D min_, const geometry::Vector3D max_)
       : min(min_), max(max_) {}
+  AABB(const geometry::Triangle& tri);
 
   [[nodiscard]] bool is_valid() const noexcept;
   [[nodiscard]] bool is_intersect(const AABB& other) const noexcept;
@@ -20,6 +21,8 @@ struct AABB {
 
   void expand(const geometry::Vector3D& p) noexcept;
   void merge(const AABB& other) noexcept;
+
+  void add_tri_to_aabb(const geometry::Triangle& tri, AABB& aabb) noexcept;
 };
 
 [[nodiscard]] AABB merge(const AABB& a, const AABB& b) noexcept;

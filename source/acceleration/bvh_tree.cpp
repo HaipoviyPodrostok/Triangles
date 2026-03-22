@@ -1,16 +1,11 @@
 #include "acceleration/bvh_tree.hpp"
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
-#include <fstream>
-#include <iostream>
 
 #ifdef USE_OPENCL
 #include <CL/opencl.h>
 #endif  // USE_OPENCL
-
-#include "acceleration/acceleration.hpp"
 
 namespace acceleration {
 
@@ -48,6 +43,8 @@ void BVHNode::init_internal(const AABB& box_, const int left_idx_,
   left_idx = left_idx_;
   right_idx = right_idx_;
 }
+
+#ifdef USE_OPENCL
 
 [[nodiscard]] uint32_t expand_bits(uint32_t v) noexcept {
   v &= 0x000003ff;
@@ -285,14 +282,14 @@ std::optional<detail::SplitInfo> detail::get_split_info(
   return split_info;
 }
 
-void fill_nodes_idx(std::vector<BVHNode>& nodes,
-                    const detail::SplitInfo& split_info) {
-  const size_t n_nodes = split_info.splits.size();
-  const size_t n_leafs = n_nodes + 1;
+void detail::fill_node_idx(std::vector<BVHNode>& nodes,
+                           const detail::SplitInfo& split_info) {
+  const size_t n_internals = split_info.splits.size();
+  const size_t n_leafs = n_internals + 1;
 
-  nodes.resize(n_nodes + n_leafs);
+  nodes.resize(n_internals + n_leafs);
 
-  for (size_t i = 0; i < n_nodes - 1; ++i) {
+  for (size_t i = 0; i < n_internals; ++i) {
     int32_t left_idx = -1;
     int32_t right_idx = -1;
 
@@ -301,25 +298,32 @@ void fill_nodes_idx(std::vector<BVHNode>& nodes,
     const int32_t end = start + split_info.n_objs[i] - 1;
 
     if (split == start) {
-      left_idx = n_nodes + split;
+      left_idx = n_internals + split;
     } else {
       left_idx = split;
     }
 
     if (split + 1 == end) {
-      right_idx = n_nodes + (split + 1);
+      right_idx = n_internals + (split + 1);
     } else {
       right_idx = split + 1;
     }
 
     nodes[i].left_idx = left_idx;
     nodes[i].right_idx = right_idx;
-    nodes[i].start = start;
-    nodes[i].n_objs = split_info.n_objs[i];
+    nodes[i].start = 0;
+    nodes[i].n_objs = 0;
+  }
+
+  for (size_t i = 0; i < n_leafs; ++i) {
+    nodes[n_internals + i].start = i;
+    nodes[n_internals + i].n_objs = 1;
+    nodes[n_internals + i].left_idx = -1;
+    nodes[n_internals + i].right_idx = -1;
   }
 }
 
-void compute_boxes(std::vector<BVHNode>& nodes, const int inernal)
+#endif  // USE_OPENCL
 
 //
 // BVHTree::BVHTree(std::vector<geometry::Triangle>& input) :

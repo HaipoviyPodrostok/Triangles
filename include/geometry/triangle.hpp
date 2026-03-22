@@ -4,7 +4,6 @@
 
 #include <cassert>
 
-#include "acceleration/AABB.hpp"
 #include "line.hpp"
 #include "plane.hpp"
 #include "section.hpp"
@@ -37,6 +36,4 @@ class Triangle {
   [[nodiscard]] bool is_intersect_3d(const Triangle& other) const noexcept;
 };
 
-acceleration::AABB make_AABB(const Triangle& tri) noexcept;
-void add_tri_to_aabb(const Triangle& tri, acceleration::AABB& aabb) noexcept;
 }  // namespace geometry

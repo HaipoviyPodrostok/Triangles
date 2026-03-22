@@ -25,6 +25,8 @@ set(GEOMETRY_SRCS
     source/geometry/section.cpp
     source/geometry/plane.cpp
     source/geometry/triangle.cpp
+    source/acceleration/AABB.cpp
+    source/acceleration/bvh_tree.cpp
 )
 add_library(geometry_lib STATIC ${GEOMETRY_SRCS})
 target_include_directories(geometry_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -40,7 +42,7 @@ if(TRIANGLES_STANDALONE)
 
     if(USE_OPENCL)
         target_link_libraries(triangles_lib PUBLIC OpenCL::OpenCL)
-        target_compile_definitions(triangles_lib PUBLIC USE_OPENCL)
+        target_compile_definitions(triangles_lib PUBLIC USE_OPENCL CL_TARGET_OPENCL_VERSION=300)
     endif()
 
     if(ENABLE_LOGS)

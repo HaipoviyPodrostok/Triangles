@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "AABB.hpp"
+#include "geometry/geometry.hpp"
 
 namespace acceleration {
 
@@ -30,6 +31,7 @@ struct BVHNode {
   int32_t right_idx = -1;
 
   size_t start = 0;
+
   size_t n_objs = 0;
 
   BVHNode(const AABB& box_ = AABB(), const size_t first_ = 0,
@@ -55,17 +57,18 @@ class BVHTree {
   std::vector<ObjT>& input;
   std::vector<uint32_t> morton_codes;
 
-#ifdef USE_OPENCL
   [[nodiscard]] std::vector<geometry::Vector3D> find_centroids();
+
+#ifdef USE_OPENCL
   [[nodiscard]] AABB compute_global_box(
       const std::vector<geometry::Vector3D> centroids);
   void sort_input();
+  void compute_boxes(const size_t node_idx, const size_t n_internals);
 #endif
 };
 
 template <typename ObjT>
-std::vector<geometry::Vector3D> find_centroids(
-    const std::vector<ObjT>& input) noexcept {
+[[nodiscard]] std::vector<geometry::Vector3D> BVHTree<ObjT>::find_centroids() {
   std::vector<geometry::Vector3D> centroids;
 
   for (size_t i = 0; i < input.size(); ++i) {
@@ -88,7 +91,7 @@ struct SplitInfo {
 [[nodiscard]] std::optional<SplitInfo> get_split_info(
     const std::vector<uint32_t>& morton_codes);
 
-void fill_node_vec(std::vector<BVHNode>& nodes, const SplitInfo& split_info);
+void fill_node_idx(std::vector<BVHNode>& nodes, const SplitInfo& split_info);
 
 [[nodiscard]] std::vector<uint32_t> get_morton_code(
     const std::vector<geometry::Vector3D>& centroids,
@@ -97,15 +100,14 @@ void fill_node_vec(std::vector<BVHNode>& nodes, const SplitInfo& split_info);
 }  // namespace detail
 
 template <typename ObjT>
-[[nodiscard]] AABB compute_global_box(
-    const std::vector<ObjT>& input,
-    const std::vector<geometry::Vector3D> centroids) noexcept {
+AABB BVHTree<ObjT>::compute_global_box(
+    const std::vector<geometry::Vector3D> centroids) {
   if (centroids.empty()) { return AABB(); }
 
-  geometry::Vector3D min = input[0];
-  geometry::Vector3D max = input[0];
+  geometry::Vector3D min = centroids[0];
+  geometry::Vector3D max = centroids[0];
 
-  for (size_t i = 1; i < input.size(); ++i) {
+  for (size_t i = 1; i < centroids.size(); ++i) {
     for (size_t j = 0; j < 3; ++j) {
       const geometry::Vector3D& centroid = centroids[i];
 
@@ -146,26 +148,43 @@ void BVHTree<ObjT>::sort_input() {
   input = std::move(sorted_input);
 }
 
+template <typename ObjT>
+void BVHTree<ObjT>::compute_boxes(const size_t node_idx,
+                                  const size_t n_internals) {
+  if (node_idx >= n_internals) {
+    const size_t obj_idx = nodes[node_idx].start;
+    nodes[node_idx].box = AABB{input[obj_idx]};
+    return;
+  }
+
+  const size_t left_idx = nodes[node_idx].left_idx;
+  const size_t right_idx = nodes[node_idx].right_idx;
+
+  compute_boxes(left_idx, n_internals);
+  compute_boxes(right_idx, n_internals);
+
+  nodes[node_idx].box = merge(nodes[left_idx].box, nodes[right_idx].box);
+}
 #endif
 
 template <typename ObjT>
 void BVHTree<ObjT>::build() {
-  const std::vector<geometry::Vector3D> centroids = find_centroids<ObjT>(input);
+  const std::vector<geometry::Vector3D> centroids = find_centroids();
 
 #ifdef USE_OPENCL
-  const AABB global_box = compute_global_box<ObjT>(input, centroids);
-  const std::vector<uint32_t> morton_codes =
-      detail::get_morton_code(centroids, global_box);
-  sort_input<ObjT>(input, morton_codes);
+  const AABB global_box = compute_global_box(centroids);
+  this->morton_codes = detail::get_morton_code(centroids, global_box);
+  this->sort_input();
 
   std::optional<detail::SplitInfo> split_info =
-      detail::get_split_info(morton_codes);
+      detail::get_split_info(this->morton_codes);
   if (split_info.has_value()) {
-    detail::fill_node_vec(nodes, split_info.value());
+    detail::fill_node_idx(nodes, split_info.value());
+    compute_boxes(0, split_info.value().splits.size());
   }
 
 #else
-  build_cpu();
+  // build_cpu();
 #endif
 }
 }  // namespace acceleration

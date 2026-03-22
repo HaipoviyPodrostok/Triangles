@@ -45,10 +45,11 @@ void AABB::merge(const AABB& other) noexcept {
   }
 }
 
-AABB merge(AABB& a, AABB& b) noexcept {
+AABB merge(const AABB& a, const AABB& b) noexcept {
   assert(a.is_valid() && b.is_valid());
-  a.merge(b);
-  return a;
+  AABB res = a;
+  res.merge(b);
+  return res;
 }
 
 bool AABB::is_inside(const AABB& other) const noexcept {
@@ -58,6 +59,24 @@ bool AABB::is_inside(const AABB& other) const noexcept {
   return min.x < other.min.x + math::eps && min.y < other.min.y + math::eps &&
          min.z < other.min.z + math::eps && max.x < other.max.x + math::eps &&
          max.y < other.max.y + math::eps && max.z < other.max.z + math::eps;
+}
+
+AABB::AABB(const geometry::Triangle& tri)
+    : min{std::fmin(std::fmin(tri.a.x, tri.b.x), tri.c.x),
+          std::fmin(std::fmin(tri.a.y, tri.b.y), tri.c.y),
+          std::fmin(std::fmin(tri.a.z, tri.b.z), tri.c.z)},
+      max{std::fmax(std::fmax(tri.a.x, tri.b.x), tri.c.x),
+          std::fmax(std::fmax(tri.a.y, tri.b.y), tri.c.y),
+          std::fmax(std::fmax(tri.a.z, tri.b.z), tri.c.z)} {}
+
+void add_tri_to_aabb(const geometry::Triangle& tri,
+                     acceleration::AABB& aabb) noexcept {
+  assert(tri.is_valid());
+  assert(aabb.is_valid());
+
+  aabb.expand(tri.a);
+  aabb.expand(tri.b);
+  aabb.expand(tri.c);
 }
 
 }  // namespace acceleration
