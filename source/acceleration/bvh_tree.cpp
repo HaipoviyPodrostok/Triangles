@@ -1,16 +1,31 @@
 #include "acceleration/bvh_tree.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <fstream>
+#include <iostream>
 
 #ifdef USE_OPENCL
 #include <CL/opencl.h>
 #endif  // USE_OPENCL
 
+#include <spdlog/spdlog.h>
+
 namespace acceleration {
 
 BVHNode::BVHNode(const AABB& box_, const size_t first_, const size_t n_objs_)
     : box(box_), start(first_), n_objs(n_objs_) {
+  double min_x = box.min.x;
+  double min_y = box.min.y;
+  double min_z = box.min.z;
+
+  double max_x = box.max.x;
+  double max_y = box.max.y;
+  double max_z = box.max.z;
+
+  spdlog::info("{}, {}, {}, {}, {}, {}", min_x, min_y, min_z, max_x, max_y,
+               max_z);
   assert(box_.is_valid());
 }
 
@@ -279,6 +294,8 @@ std::optional<detail::SplitInfo> detail::get_split_info(
   const std::optional<detail::SplitInfo> split_info =
       run_find_splits(cl, morton_codes);
   cleanup_opencl(cl);
+
+  spdlog::info("get_split_info successful)");
   return split_info;
 }
 
@@ -287,7 +304,11 @@ void detail::fill_node_idx(std::vector<BVHNode>& nodes,
   const size_t n_internals = split_info.splits.size();
   const size_t n_leafs = n_internals + 1;
 
+  spdlog::info("sperma");
+
   nodes.resize(n_internals + n_leafs);
+
+  spdlog::info("resize succes");
 
   for (size_t i = 0; i < n_internals; ++i) {
     int32_t left_idx = -1;
@@ -321,6 +342,8 @@ void detail::fill_node_idx(std::vector<BVHNode>& nodes,
     nodes[n_internals + i].left_idx = -1;
     nodes[n_internals + i].right_idx = -1;
   }
+
+  spdlog::info("fill_node succes");
 }
 
 #endif  // USE_OPENCL

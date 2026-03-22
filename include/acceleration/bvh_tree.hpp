@@ -1,4 +1,6 @@
 #pragma once
+#include <spdlog/spdlog.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -19,10 +21,8 @@ inline constexpr size_t grid_resolution = 1024;
 inline const std::string opencl_file = "source/acceleration/kernels/lbvh.cl";
 #endif  // USE_OPENCL
 
-#ifdef ENABLE_BVH_DEBUG
 inline const std::string default_dump_folder = "./dumps";
 inline const std::string counter_file_name = "./dumps/counter_file.txt";
-#endif  // ENABLE_BVH_DEBUG
 
 struct BVHNode {
   AABB box;
@@ -76,6 +76,9 @@ template <typename ObjT>
     const geometry::Vector3D centroid = input[i].get_centre();
     centroids.emplace_back(centroid);
   }
+
+  // spdlog::info("find centroid succes");
+  // spdlog::info("centroids_size = {}", centroids.size());
   return centroids;
 }
 
@@ -115,6 +118,18 @@ AABB BVHTree<ObjT>::compute_global_box(
       if (centroid[j] > max[j]) { max[j] = centroid[j]; }
     }
   }
+
+  spdlog::info("global_box_computed");
+  // double min_x = min.x;
+  // double min_y = min.y;
+  // double min_z = min.z;
+
+  // double max_x = max.x;
+  // double max_y = max.y;
+  // double max_z = max.z;
+
+  // spdlog::info("{}, {}, {}, {}, {}, {}", min_x, min_y, min_z, max_x, max_y,
+  //              max_z);
   return {min, max};
 }
 
@@ -179,6 +194,7 @@ void BVHTree<ObjT>::build() {
   std::optional<detail::SplitInfo> split_info =
       detail::get_split_info(this->morton_codes);
   if (split_info.has_value()) {
+    spdlog::info("split info has value");
     detail::fill_node_idx(nodes, split_info.value());
     compute_boxes(0, split_info.value().splits.size());
   }

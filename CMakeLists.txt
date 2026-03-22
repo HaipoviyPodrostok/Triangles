@@ -25,8 +25,6 @@ set(GEOMETRY_SRCS
     source/geometry/section.cpp
     source/geometry/plane.cpp
     source/geometry/triangle.cpp
-    source/acceleration/AABB.cpp
-    source/acceleration/bvh_tree.cpp
 )
 add_library(geometry_lib STATIC ${GEOMETRY_SRCS})
 target_include_directories(geometry_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

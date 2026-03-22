@@ -9,9 +9,17 @@
 
 namespace acceleration {
 
+AABB::AABB(const geometry::Triangle& tri)
+    : min{std::fmin(std::fmin(tri.a.x, tri.b.x), tri.c.x),
+          std::fmin(std::fmin(tri.a.y, tri.b.y), tri.c.y),
+          std::fmin(std::fmin(tri.a.z, tri.b.z), tri.c.z)},
+      max{std::fmax(std::fmax(tri.a.x, tri.b.x), tri.c.x),
+          std::fmax(std::fmax(tri.a.y, tri.b.y), tri.c.y),
+          std::fmax(std::fmax(tri.a.z, tri.b.z), tri.c.z)} {}
+
 bool AABB::is_valid() const noexcept {
-  return min.is_valid() && max.is_valid() && min.x < max.x && min.y < max.y &&
-         min.z < max.z && !min.is_match(max);
+  return min.is_valid() && max.is_valid() && min.x <= max.x && min.y <= max.y &&
+         min.z <= max.z;
 }
 
 bool AABB::is_intersect(const AABB& other) const noexcept {
@@ -60,14 +68,6 @@ bool AABB::is_inside(const AABB& other) const noexcept {
          min.z < other.min.z + math::eps && max.x < other.max.x + math::eps &&
          max.y < other.max.y + math::eps && max.z < other.max.z + math::eps;
 }
-
-AABB::AABB(const geometry::Triangle& tri)
-    : min{std::fmin(std::fmin(tri.a.x, tri.b.x), tri.c.x),
-          std::fmin(std::fmin(tri.a.y, tri.b.y), tri.c.y),
-          std::fmin(std::fmin(tri.a.z, tri.b.z), tri.c.z)},
-      max{std::fmax(std::fmax(tri.a.x, tri.b.x), tri.c.x),
-          std::fmax(std::fmax(tri.a.y, tri.b.y), tri.c.y),
-          std::fmax(std::fmax(tri.a.z, tri.b.z), tri.c.z)} {}
 
 void add_tri_to_aabb(const geometry::Triangle& tri,
                      acceleration::AABB& aabb) noexcept {
