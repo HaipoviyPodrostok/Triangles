@@ -9,6 +9,7 @@
 
 #include "AABB.hpp"
 #include "geometry/geometry.hpp"
+#include "math/math.hpp"
 
 namespace acceleration {
 
@@ -21,8 +22,10 @@ inline constexpr size_t grid_resolution = 1024;
 inline const std::string opencl_file = "source/acceleration/kernels/lbvh.cl";
 #endif  // USE_OPENCL
 
+#ifdef NDEBUG
 inline const std::string default_dump_folder = "./dumps";
 inline const std::string counter_file_name = "./dumps/counter_file.txt";
+#endif
 
 struct BVHNode {
   AABB box;
@@ -50,6 +53,8 @@ class BVHTree {
  public:
   explicit BVHTree(std::vector<ObjT>& input) : input(input) { build(); }
 
+  size_t max_depth_reached;
+
   void build();
 
  private:
@@ -59,10 +64,29 @@ class BVHTree {
 
   [[nodiscard]] std::vector<geometry::Vector3D> find_centroids();
 
+  [[nodiscard]] bool build_cpu(
+      const std::vector<geometry::Vector3D>& centroids);
+
+  [[nodiscard]] AABB compute_box(
+      const std::vector<geometry::Vector3D>& centroids, const size_t start,
+      const size_t n_objs);
+
+  [[nodiscard]] size_t partition_by_median(const size_t start,
+                                           const size_t n_objs);
+
+  void sort_input_cpu(const size_t start, const size_t n_objs,
+                      const math::Axis wildest_axis, const size_t mid_idx);
+
+  [[nodiscard]] size_t build_node_cpu(const size_t start, const size_t n_objs,
+                                      const size_t depth);
+
 #ifdef USE_OPENCL
+  [[nodiscard]] bool build_gpu(
+      const std::vector<geometry::Vector3D>& centroids);
+
   [[nodiscard]] AABB compute_global_box(
       const std::vector<geometry::Vector3D> centroids);
-  void sort_input();
+  void sort_input_gpu();
   void compute_boxes(const size_t node_idx, const size_t n_internals);
 #endif
 };
@@ -134,7 +158,7 @@ AABB BVHTree<ObjT>::compute_global_box(
 }
 
 template <typename ObjT>
-void BVHTree<ObjT>::sort_input() {
+void BVHTree<ObjT>::sort_input_gpu() {
   const size_t num_obj = input.size();
   if (num_obj == 0) return;
 
@@ -187,26 +211,144 @@ void BVHTree<ObjT>::build() {
   const std::vector<geometry::Vector3D> centroids = find_centroids();
 
 #ifdef USE_OPENCL
+  bool gpu_succes = build_gpu();
+  if (gpu_succes) { return; }
+#endif
+
+  build_cpu();
+}
+
+template <typename ObjT>
+bool BVHTree<ObjT>::build_gpu(
+    const std::vector<geometry::Vector3D>& centroids) {
   const AABB global_box = compute_global_box(centroids);
   this->morton_codes = detail::get_morton_code(centroids, global_box);
-  this->sort_input();
+  this->sort_input_gpu();
 
   std::optional<detail::SplitInfo> split_info =
       detail::get_split_info(this->morton_codes);
   if (split_info.has_value()) {
-    spdlog::info("split info has value");
+    // spdlog::info("split info has value");
     detail::fill_node_idx(nodes, split_info.value());
     compute_boxes(0, split_info.value().splits.size());
+    return true;
+  }
+  return false;
+}
+
+template <typename ObjT>
+bool BVHTree<ObjT>::build_cpu(
+    const std::vector<geometry::Vector3D>& centroids) {}
+
+template <typename ObjT>
+AABB BVHTree<ObjT>::compute_box(
+    const std::vector<geometry::Vector3D>& centroids, const size_t start,
+    const size_t n_objs) {
+  if (n_objs == 0) { return AABB(); }
+
+  geometry::Vector3D min = centroids[0];
+  geometry::Vector3D max = centroids[0];
+
+  for (size_t i = start; i < start + n_objs; ++i) {
+    for (size_t j = 0; j < 3; ++j) {
+      const geometry::Vector3D& centroid = centroids[i];
+
+      if (centroid[j] < min[j]) { min[j] = centroid[j]; }
+      if (centroid[j] > max[j]) { max[j] = centroid[j]; }
+    }
   }
 
-#else
-  // build_cpu();
-#endif
+  return {min, max};
 }
-}  // namespace acceleration
+
+template <typename ObjT>
+size_t BVHTree<ObjT>::partition_by_median(const size_t start,
+                                          const size_t n_objs) {
+  const AABB& box = compute_box(start, n_objs);
+
+  const double spread_x = std::fabs(box.max.x - box.min.x);
+  const double spread_y = std::fabs(box.max.y - box.min.y);
+  const double spread_z = std::fabs(box.max.z - box.min.z);
+
+  math::Axis wildest_axis =
+      (spread_x >= spread_y && spread_x >= spread_z)
+          ? math::Axis::X
+          : (spread_y >= spread_z ? math::Axis::Y : math::Axis::Z);
+
+  const size_t mid_idx = start + n_objs / 2;
+
+  sort_input_cpu(start, n_objs, wildest_axis, mid_idx);
+
+  return mid_idx;
+}
+
+template <typename ObjT>
+void BVHTree<ObjT>::sort_input_cpu(const size_t start, const size_t n_objs,
+                                   const math::Axis wildest_axis,
+                                   const size_t mid_idx) {
+  using InputIt = std::vector<ObjT>::iterator;
+  InputIt begin = input.begin() + start;
+  InputIt mid = input.begin() + mid_idx;
+  InputIt end = input.begin() + start + n_objs;
+
+  switch (wildest_axis) {
+    case math::Axis::X: {
+      auto centre_cmp = [](const geometry::Triangle& a,
+                           const geometry::Triangle& b) {
+        return a.get_centre().x < b.get_centre().x;
+      };
+      std::nth_element(begin, mid, end, centre_cmp);
+      break;
+    }
+    case math::Axis::Y: {
+      auto centre_cmp = [](const geometry::Triangle& a,
+                           const geometry::Triangle& b) {
+        return a.get_centre().y < b.get_centre().y;
+      };
+      std::nth_element(begin, mid, end, centre_cmp);
+      break;
+    }
+    default: {
+      auto centre_cmp = [](const geometry::Triangle& a,
+                           const geometry::Triangle& b) {
+        return a.get_centre().z < b.get_centre().z;
+      };
+      std::nth_element(begin, mid, end, centre_cmp);
+      break;
+    }
+  }
+}
+
+template <typename ObjT>
+size_t BVHTree<ObjT>::build_node_cpu(const size_t start, const size_t n_objs,
+                                     const size_t depth) {
+  int node_idx = nodes.size();
+  nodes.emplace_back();
+
+  if (depth > max_depth_reached) { max_depth_reached = depth; }
+
+  if (n_objs <= max_leaf_capacity || depth >= tree_max_depth) {
+    nodes[node_idx].init_leaf(compute_box(start, n_objs), start, n_objs);
+    return node_idx;
+  }
+
+  const int mid_idx = partition_by_median(start, n_objs);
+
+  const size_t left_n_objs = mid_idx - start;
+  const size_t right_n_objs = n_objs - left_n_objs;
+
+  const int left_idx = build_node_cpu(start, left_n_objs, depth + 1);
+  const int right_idx = build_node_cpu(mid_idx, right_n_objs, depth + 1);
+
+  nodes[node_idx].init_internal(
+      merge(nodes[left_idx].box, nodes[right_idx].box), left_idx, right_idx);
+
+  return node_idx;
+}
 
 // class BVHTree {
 // //  public:
+}  // namespace acceleration
 // //   size_t max_depth_reached = 0;
 
 //   BVHTree(std::vector<geometry::Triangle>& input);

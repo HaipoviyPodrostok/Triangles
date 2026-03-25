@@ -33,6 +33,8 @@ if(TRIANGLES_STANDALONE)
     set(ACCEL_SRCS
         source/acceleration/AABB.cpp
         source/acceleration/bvh_tree.cpp
+        source/acceleration/bvh_tree_gpu.cpp
+        source/acceleration/bvh_tree_cpu.cpp
     )
     add_library(triangles_lib STATIC ${ACCEL_SRCS})
     target_include_directories(triangles_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
