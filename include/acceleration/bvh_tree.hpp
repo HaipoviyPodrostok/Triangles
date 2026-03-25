@@ -13,7 +13,7 @@
 
 namespace acceleration {
 
-inline constexpr size_t max_leaf_capacity = 4;
+inline constexpr size_t max_leaf_cap_for_cpu = 4;
 inline constexpr size_t tree_max_depth = 64;
 inline constexpr size_t morton_code_size = 32;  // bits
 inline constexpr size_t grid_resolution = 1024;
@@ -64,12 +64,9 @@ class BVHTree {
 
   [[nodiscard]] std::vector<geometry::Vector3D> find_centroids();
 
-  [[nodiscard]] bool build_cpu(
-      const std::vector<geometry::Vector3D>& centroids);
+  void build_cpu();
 
-  [[nodiscard]] AABB compute_box(
-      const std::vector<geometry::Vector3D>& centroids, const size_t start,
-      const size_t n_objs);
+  [[nodiscard]] AABB compute_box(const size_t start, const size_t n_objs);
 
   [[nodiscard]] size_t partition_by_median(const size_t start,
                                            const size_t n_objs);
@@ -77,8 +74,8 @@ class BVHTree {
   void sort_input_cpu(const size_t start, const size_t n_objs,
                       const math::Axis wildest_axis, const size_t mid_idx);
 
-  [[nodiscard]] size_t build_node_cpu(const size_t start, const size_t n_objs,
-                                      const size_t depth);
+  size_t build_node_rec_cpu(const size_t start, const size_t n_objs,
+                            const size_t depth);
 
 #ifdef USE_OPENCL
   [[nodiscard]] bool build_gpu(
@@ -90,6 +87,18 @@ class BVHTree {
   void compute_boxes(const size_t node_idx, const size_t n_internals);
 #endif
 };
+
+template <typename ObjT>
+void BVHTree<ObjT>::build() {
+  const std::vector<geometry::Vector3D> centroids = find_centroids();
+
+#ifdef USE_OPENCL
+  bool gpu_succes = build_gpu();
+  if (gpu_succes) { return; }
+#endif  // USE_OPENCL
+
+  build_cpu(centroids);
+}
 
 template <typename ObjT>
 [[nodiscard]] std::vector<geometry::Vector3D> BVHTree<ObjT>::find_centroids() {
@@ -204,19 +213,6 @@ void BVHTree<ObjT>::compute_boxes(const size_t node_idx,
 
   nodes[node_idx].box = merge(nodes[left_idx].box, nodes[right_idx].box);
 }
-#endif
-
-template <typename ObjT>
-void BVHTree<ObjT>::build() {
-  const std::vector<geometry::Vector3D> centroids = find_centroids();
-
-#ifdef USE_OPENCL
-  bool gpu_succes = build_gpu();
-  if (gpu_succes) { return; }
-#endif
-
-  build_cpu();
-}
 
 template <typename ObjT>
 bool BVHTree<ObjT>::build_gpu(
@@ -236,29 +232,23 @@ bool BVHTree<ObjT>::build_gpu(
   return false;
 }
 
-template <typename ObjT>
-bool BVHTree<ObjT>::build_cpu(
-    const std::vector<geometry::Vector3D>& centroids) {}
+#endif  // USE_OPENCL
 
 template <typename ObjT>
-AABB BVHTree<ObjT>::compute_box(
-    const std::vector<geometry::Vector3D>& centroids, const size_t start,
-    const size_t n_objs) {
+void BVHTree<ObjT>::build_cpu() {
+  build_node_rec_cpu(0, input.size(), 1);
+}
+
+template <typename ObjT>
+AABB BVHTree<ObjT>::compute_box(const size_t start, const size_t n_objs) {
   if (n_objs == 0) { return AABB(); }
 
-  geometry::Vector3D min = centroids[0];
-  geometry::Vector3D max = centroids[0];
+  AABB box{input[start]};
 
-  for (size_t i = start; i < start + n_objs; ++i) {
-    for (size_t j = 0; j < 3; ++j) {
-      const geometry::Vector3D& centroid = centroids[i];
-
-      if (centroid[j] < min[j]) { min[j] = centroid[j]; }
-      if (centroid[j] > max[j]) { max[j] = centroid[j]; }
-    }
+  for (size_t i = start + 1; i < start + n_objs; ++i) {
+    box.merge(AABB{input[i]});
   }
-
-  return {min, max};
+  return box;
 }
 
 template <typename ObjT>
@@ -293,24 +283,21 @@ void BVHTree<ObjT>::sort_input_cpu(const size_t start, const size_t n_objs,
 
   switch (wildest_axis) {
     case math::Axis::X: {
-      auto centre_cmp = [](const geometry::Triangle& a,
-                           const geometry::Triangle& b) {
+      auto centre_cmp = [](const ObjT& a, const ObjT& b) {
         return a.get_centre().x < b.get_centre().x;
       };
       std::nth_element(begin, mid, end, centre_cmp);
       break;
     }
     case math::Axis::Y: {
-      auto centre_cmp = [](const geometry::Triangle& a,
-                           const geometry::Triangle& b) {
+      auto centre_cmp = [](const ObjT& a, const ObjT& b) {
         return a.get_centre().y < b.get_centre().y;
       };
       std::nth_element(begin, mid, end, centre_cmp);
       break;
     }
     default: {
-      auto centre_cmp = [](const geometry::Triangle& a,
-                           const geometry::Triangle& b) {
+      auto centre_cmp = [](const ObjT& a, const ObjT& b) {
         return a.get_centre().z < b.get_centre().z;
       };
       std::nth_element(begin, mid, end, centre_cmp);
@@ -320,14 +307,15 @@ void BVHTree<ObjT>::sort_input_cpu(const size_t start, const size_t n_objs,
 }
 
 template <typename ObjT>
-size_t BVHTree<ObjT>::build_node_cpu(const size_t start, const size_t n_objs,
-                                     const size_t depth) {
-  int node_idx = nodes.size();
+size_t BVHTree<ObjT>::build_node_rec_cpu(const size_t start,
+                                         const size_t n_objs,
+                                         const size_t depth) {
+  size_t node_idx = nodes.size();
   nodes.emplace_back();
 
   if (depth > max_depth_reached) { max_depth_reached = depth; }
 
-  if (n_objs <= max_leaf_capacity || depth >= tree_max_depth) {
+  if (n_objs <= max_leaf_cap_for_cpu || depth >= tree_max_depth) {
     nodes[node_idx].init_leaf(compute_box(start, n_objs), start, n_objs);
     return node_idx;
   }
@@ -337,8 +325,8 @@ size_t BVHTree<ObjT>::build_node_cpu(const size_t start, const size_t n_objs,
   const size_t left_n_objs = mid_idx - start;
   const size_t right_n_objs = n_objs - left_n_objs;
 
-  const int left_idx = build_node_cpu(start, left_n_objs, depth + 1);
-  const int right_idx = build_node_cpu(mid_idx, right_n_objs, depth + 1);
+  const int left_idx = build_node_rec_cpu(start, left_n_objs, depth + 1);
+  const int right_idx = build_node_rec_cpu(mid_idx, right_n_objs, depth + 1);
 
   nodes[node_idx].init_internal(
       merge(nodes[left_idx].box, nodes[right_idx].box), left_idx, right_idx);

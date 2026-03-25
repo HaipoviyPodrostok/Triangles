@@ -22,7 +22,7 @@ bool BVHNode::is_valid() const noexcept {
 
   if (is_leaf()) {
     return left_idx == -1 && right_idx == -1 && n_objs > 0 &&
-           n_objs <= max_leaf_capacity;
+           n_objs <= max_leaf_cap_for_cpu;
   } else {
     return n_objs == 0 && left_idx > -1 && right_idx > -1 &&
            left_idx != right_idx;
