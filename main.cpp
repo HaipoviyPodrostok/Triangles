@@ -64,6 +64,8 @@ int main(int argc, char* argv[]) {
 
   acceleration::BVHTree<Triangle> tree{input};
 
+  tree.dump_to_dot("tree.dot");
+
   std::cout << "finished" << std::endl;
   spdlog::info("Program finished");
 

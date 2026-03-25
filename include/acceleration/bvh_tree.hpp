@@ -2,9 +2,15 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <optional>
+#include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "AABB.hpp"
@@ -57,6 +63,9 @@ class BVHTree {
 
   void build();
 
+  void dump_to_dot(const std::string& filename) const;
+  void dump_node_dot(std::ostream& out, size_t idx) const;
+
  private:
   std::vector<BVHNode> nodes;
   std::vector<ObjT>& input;
@@ -78,8 +87,7 @@ class BVHTree {
                             const size_t depth);
 
 #ifdef USE_OPENCL
-  [[nodiscard]] bool build_gpu(
-      const std::vector<geometry::Vector3D>& centroids);
+  [[nodiscard]] bool build_gpu();
 
   [[nodiscard]] AABB compute_global_box(
       const std::vector<geometry::Vector3D> centroids);
@@ -90,14 +98,12 @@ class BVHTree {
 
 template <typename ObjT>
 void BVHTree<ObjT>::build() {
-  const std::vector<geometry::Vector3D> centroids = find_centroids();
-
+  nodes.clear();
 #ifdef USE_OPENCL
   bool gpu_succes = build_gpu();
   if (gpu_succes) { return; }
 #endif  // USE_OPENCL
-
-  build_cpu(centroids);
+  build_cpu();
 }
 
 template <typename ObjT>
@@ -215,8 +221,8 @@ void BVHTree<ObjT>::compute_boxes(const size_t node_idx,
 }
 
 template <typename ObjT>
-bool BVHTree<ObjT>::build_gpu(
-    const std::vector<geometry::Vector3D>& centroids) {
+bool BVHTree<ObjT>::build_gpu() {
+  const std::vector<geometry::Vector3D> centroids = find_centroids();
   const AABB global_box = compute_global_box(centroids);
   this->morton_codes = detail::get_morton_code(centroids, global_box);
   this->sort_input_gpu();
@@ -334,10 +340,38 @@ size_t BVHTree<ObjT>::build_node_rec_cpu(const size_t start,
   return node_idx;
 }
 
-// class BVHTree {
-// //  public:
+template <typename ObjT>
+void BVHTree<ObjT>::dump_to_dot(const std::string& filename) const {
+  std::ofstream out(filename);
+  out << "digraph BVH {\n";
+  out << "  node [shape=record];\n";
+
+  if (!nodes.empty()) { dump_node_dot(out, 0); }
+
+  out << "}\n";
+}
+
+template <typename ObjT>
+void BVHTree<ObjT>::dump_node_dot(std::ostream& out, size_t idx) const {
+  const auto& node = nodes[idx];
+
+  // Создаем подпись для узла (ID, тип, границы)
+  out << "  node" << idx << " [label=\"{ID: " << idx;
+  if (node.is_leaf()) {
+    out << " | LEAF | n_objs: " << node.n_objs << "}\"];\n";
+  } else {
+    out << " | INTERNAL}\"];\n";
+
+    // Рекурсивно рисуем связи к детям
+    out << "  node" << idx << " -> node" << node.left_idx << ";\n";
+    out << "  node" << idx << " -> node" << node.right_idx << ";\n";
+
+    dump_node_dot(out, node.left_idx);
+    dump_node_dot(out, node.right_idx);
+  }
+}
+
 }  // namespace acceleration
-// //   size_t max_depth_reached = 0;
 
 //   BVHTree(std::vector<geometry::Triangle>& input);
 
