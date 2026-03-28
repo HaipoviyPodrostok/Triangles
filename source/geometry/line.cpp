@@ -15,31 +15,31 @@ Line::Line(const Vector3D& origin, const Vector3D& dir)
   assert(!dir.is_zero());
 }
 
-bool Line::is_valid() const noexcept {
+bool Line::is_valid() const {
   return origin.is_valid() && dir.is_valid() && !(dir.is_zero());
 }
 
-bool Line::is_match(const Line& other) const noexcept {
+bool Line::is_match(const Line& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
   return dir.is_collinear(other.dir) &&
          (origin - other.origin).is_collinear(dir);
 }
 
-bool Line::is_parallel(const Line& other) const noexcept {
+bool Line::is_parallel(const Line& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
   return dir.is_collinear(other.dir) &&
          !(origin - other.origin).is_collinear(dir);
 }
 
-bool Line::is_contains(const Vector3D& point) const noexcept {
+bool Line::is_contains(const Vector3D& point) const {
   assert(this->is_valid());
   assert(point.is_valid());
   return ((point - origin).is_collinear(dir));
 }
 
-bool Line::is_intersect(const Line& other) const noexcept {
+bool Line::is_intersect(const Line& other) const {
   assert(is_valid());
   assert(other.is_valid());
 
@@ -56,7 +56,7 @@ bool Line::is_intersect(const Line& other) const noexcept {
 // -- line this:  p1 + t * d1 --
 // -- line other: p2 + s * d2 --
 std::optional<Vector3D> Line::intersect_point(
-    const Line& other) const noexcept {
+    const Line& other) const {
   assert(is_valid());
   assert((other.is_valid()));
   if (!this->is_intersect(other) || this->is_match(other)) {

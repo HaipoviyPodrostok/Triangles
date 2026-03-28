@@ -9,24 +9,24 @@
 
 namespace geometry {
 
-Plane::Plane(const Vector3D& point, const Vector3D& n) noexcept : r(point) {
+Plane::Plane(const Vector3D& point, const Vector3D& n) : r(point) {
   assert(point.is_valid() && n.is_valid() && !n.is_zero());
   normal = n / n.length();
   D = normal.scalar(point);
 }
 
-bool Plane::is_valid() const noexcept {
+bool Plane::is_valid() const {
   return (r.is_valid() && normal.is_valid() && !normal.is_zero());
 }
 
-double Plane::get_distance(const Plane& other) const noexcept {
+double Plane::get_distance(const Plane& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
   double sign = (normal.is_codirected(other.normal)) ? 1.0 : -1.0;
   return std::fabs(D - sign * other.D);
 }
 
-bool Plane::is_match(const Plane& other) const noexcept {
+bool Plane::is_match(const Plane& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -35,7 +35,7 @@ bool Plane::is_match(const Plane& other) const noexcept {
   return math::is_zero(get_distance(other));
 }
 
-bool Plane::is_parallel(const Plane& other) const noexcept {
+bool Plane::is_parallel(const Plane& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -44,13 +44,13 @@ bool Plane::is_parallel(const Plane& other) const noexcept {
   return !math::is_zero(get_distance(other));
 }
 
-bool Plane::is_contains(const Vector3D& p) const noexcept {
+bool Plane::is_contains(const Vector3D& p) const {
   assert(this->is_valid());
   assert(p.is_valid());
   return math::is_zero(p.scalar(normal) - D);
 }
 
-bool Plane::is_contains(const Line& line) const noexcept {
+bool Plane::is_contains(const Line& line) const {
   assert(this->is_valid());
   assert(line.is_valid());
 
@@ -58,7 +58,7 @@ bool Plane::is_contains(const Line& line) const noexcept {
          this->is_contains(line.origin);
 }
 
-bool Plane::is_intersected(const Line& line) const noexcept {
+bool Plane::is_intersected(const Line& line) const {
   assert(this->is_valid());
   assert(line.is_valid());
 
@@ -66,7 +66,7 @@ bool Plane::is_intersected(const Line& line) const noexcept {
 }
 
 std::optional<Vector3D> Plane::get_intersect_point(
-    const Line& line) const noexcept {
+    const Line& line) const {
   assert(this->is_valid());
   assert(line.is_valid());
   if (!is_intersected(line)) { return std::nullopt; }

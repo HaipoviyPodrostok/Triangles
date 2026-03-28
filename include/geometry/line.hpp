@@ -14,14 +14,14 @@ class Line {
 
   Line(const Vector3D& origin, const Vector3D& dir);
 
-  [[nodiscard]] bool is_valid() const noexcept;
-  [[nodiscard]] bool is_match(const Line& other) const noexcept;
-  [[nodiscard]] bool is_parallel(const Line& other) const noexcept;
-  [[nodiscard]] bool is_intersect(const Line& other) const noexcept;
-  [[nodiscard]] bool is_contains(const Vector3D& point) const noexcept;
+  [[nodiscard]] bool is_valid() const;
+  [[nodiscard]] bool is_match(const Line& other) const;
+  [[nodiscard]] bool is_parallel(const Line& other) const;
+  [[nodiscard]] bool is_intersect(const Line& other) const;
+  [[nodiscard]] bool is_contains(const Vector3D& point) const;
 
   [[nodiscard]] std::optional<Vector3D> intersect_point(
-      const Line& other) const noexcept;
+      const Line& other) const;
   void print() const;
 };
 }  // namespace geometry

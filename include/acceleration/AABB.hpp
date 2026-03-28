@@ -15,16 +15,17 @@ struct AABB {
       : min(min_), max(max_) {}
   AABB(const geometry::Triangle& tri);
 
-  [[nodiscard]] bool is_valid() const noexcept;
-  [[nodiscard]] bool is_intersect(const AABB& other) const noexcept;
-  [[nodiscard]] bool is_inside(const AABB& other) const noexcept;
+  [[nodiscard]] bool is_valid() const;
+  [[nodiscard]] bool is_intersect(const AABB& other) const;
+  [[nodiscard]] bool is_inside(const AABB& other) const;
+  [[nodiscard]] bool is_contains(const AABB& other) const;
 
-  void expand(const geometry::Vector3D& p) noexcept;
-  void merge(const AABB& other) noexcept;
+  void expand(const geometry::Vector3D& p);
+  void merge(const AABB& other);
 
-  void add_tri_to_aabb(const geometry::Triangle& tri, AABB& aabb) noexcept;
+  void add_tri_to_aabb(const geometry::Triangle& tri, AABB& aabb);
 };
 
-[[nodiscard]] AABB merge(const AABB& a, const AABB& b) noexcept;
+[[nodiscard]] AABB merge(const AABB& a, const AABB& b);
 
 }  // namespace acceleration

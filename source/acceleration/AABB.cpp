@@ -17,12 +17,12 @@ AABB::AABB(const geometry::Triangle& tri)
           std::fmax(std::fmax(tri.a.y, tri.b.y), tri.c.y),
           std::fmax(std::fmax(tri.a.z, tri.b.z), tri.c.z)} {}
 
-bool AABB::is_valid() const noexcept {
+bool AABB::is_valid() const {
   return min.is_valid() && max.is_valid() && min.x <= max.x && min.y <= max.y &&
          min.z <= max.z;
 }
 
-bool AABB::is_intersect(const AABB& other) const noexcept {
+bool AABB::is_intersect(const AABB& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -36,14 +36,14 @@ bool AABB::is_intersect(const AABB& other) const noexcept {
          (minA.z <= maxB.z + math::eps) && (math::eps + maxA.z >= minB.z);
 }
 
-void AABB::expand(const geometry::Vector3D& p) noexcept {
+void AABB::expand(const geometry::Vector3D& p) {
   assert(this->is_valid());
   assert(p.is_valid());
 
   for (size_t i = 0; i < 3; ++i) { min[i] = std::fmin(min[i], p[i]); }
 }
 
-void AABB::merge(const AABB& other) noexcept {
+void AABB::merge(const AABB& other) {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -53,14 +53,14 @@ void AABB::merge(const AABB& other) noexcept {
   }
 }
 
-AABB merge(const AABB& a, const AABB& b) noexcept {
+AABB merge(const AABB& a, const AABB& b) {
   assert(a.is_valid() && b.is_valid());
   AABB res = a;
   res.merge(b);
   return res;
 }
 
-bool AABB::is_inside(const AABB& other) const noexcept {
+bool AABB::is_inside(const AABB& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -69,14 +69,19 @@ bool AABB::is_inside(const AABB& other) const noexcept {
          max.y < other.max.y + math::eps && max.z < other.max.z + math::eps;
 }
 
-void add_tri_to_aabb(const geometry::Triangle& tri,
-                     acceleration::AABB& aabb) noexcept {
+void add_tri_to_aabb(const geometry::Triangle& tri, acceleration::AABB& aabb) {
   assert(tri.is_valid());
   assert(aabb.is_valid());
 
   aabb.expand(tri.a);
   aabb.expand(tri.b);
   aabb.expand(tri.c);
+}
+
+bool AABB::is_contains(const AABB& other) const {
+  return (min.x <= other.min.x && max.x >= other.max.x &&
+          min.y <= other.min.y && max.y >= other.max.y &&
+          min.z <= other.min.z && max.z >= other.max.z);
 }
 
 }  // namespace acceleration

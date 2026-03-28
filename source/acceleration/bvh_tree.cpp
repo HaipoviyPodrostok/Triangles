@@ -17,7 +17,7 @@ BVHNode::BVHNode(const AABB& box_, const size_t first_, const size_t n_objs_)
   assert(box_.is_valid());
 }
 
-bool BVHNode::is_valid() const noexcept {
+bool BVHNode::is_valid() const {
   if (!box.is_valid()) { return false; }
 
   if (is_leaf()) {

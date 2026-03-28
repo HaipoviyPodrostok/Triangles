@@ -17,16 +17,16 @@ Section::Section(const Vector3D& a, const Vector3D& b) : a(a), b(b) {
   assert(!a.is_match(b));
 }
 
-bool Section::is_valid() const noexcept {
+bool Section::is_valid() const {
   return a.is_valid() && b.is_valid() && !((a - b).is_zero());
 }
 
-Line Section::get_line() const noexcept {
+Line Section::get_line() const {
   assert(this->is_valid());
   return Line{a, b - a};
 }
 
-bool Section::is_intersect(const Section& other) const noexcept {
+bool Section::is_intersect(const Section& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -86,7 +86,7 @@ bool Section::is_intersect(const Section& other) const noexcept {
   return false;
 }
 
-bool Section::is_intersect(const Line& other) const noexcept {
+bool Section::is_intersect(const Line& other) const {
   assert(this->is_valid());
   assert(other.is_valid());
 
@@ -101,14 +101,14 @@ bool Section::is_intersect(const Line& other) const noexcept {
   return this->is_contains(*opt_p);
 }
 
-bool Section::is_belong(const Line& line) const noexcept {
+bool Section::is_belong(const Line& line) const {
   assert(is_valid());
   assert(line.is_valid());
   return line.is_contains(a) && line.is_contains(b);
 }
 
 std::optional<Vector3D> Section::intersect_point(
-    const Line& line) const noexcept {
+    const Line& line) const {
   assert(this->is_valid());
   assert(line.is_valid());
 
@@ -121,11 +121,11 @@ std::optional<Vector3D> Section::intersect_point(
   return this_line.intersect_point(line);
 }
 
-double Section::length() const noexcept {
+double Section::length() const {
   return (a - b).length();
 }
 
-bool Section::is_contains(const Vector3D& p) const noexcept {
+bool Section::is_contains(const Vector3D& p) const {
   assert(this->is_valid());
   assert(p.is_valid());
 

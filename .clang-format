@@ -1,6 +1,7 @@
 BasedOnStyle: Google
 IndentWidth: 2
 ColumnLimit: 80
+DerivePointerAlignment: false
 PointerAlignment: Left
 SortIncludes: true
 AllowShortFunctionsOnASingleLine: Inline
@@ -10,3 +11,23 @@ AllowShortBlocksOnASingleLine: Always
 
 #Разбивает длинные списки инициализации конструктора
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+# 1. Выравнивание аргументов под скобкой
+AlignAfterOpenBracket: Align
+
+# 2. Выравнивание макросов #define
+AlignConsecutiveMacros: true
+
+# 3. Автоматические комментарии в конце namespace
+FixNamespaceComments: true
+
+# 4. То самое выравнивание знаков '=' (из твоего прошлого вопроса)
+AlignConsecutiveAssignments: true
+
+# 5. Выравнивание объявлений переменных (типы и имена в колонку)
+AlignConsecutiveDeclarations: true
+
+# 6. Выравнивание инициализации в конструкторах (через двоеточие)
+PackConstructorInitializers: NextLine
+
+AlignTrailingComments: true

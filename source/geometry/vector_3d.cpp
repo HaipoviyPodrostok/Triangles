@@ -13,32 +13,32 @@ bool Vector3D::is_valid() const {
   return std::isfinite(x) && std::isfinite(y) && std::isfinite(z);
 }
 
-Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs) noexcept {
+Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs) {
   assert(lhs.is_valid() && rhs.is_valid());
   return Vector3D{lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z};
 }
 
-Vector3D operator-(const Vector3D& lhs, const Vector3D& rhs) noexcept {
+Vector3D operator-(const Vector3D& lhs, const Vector3D& rhs) {
   assert(lhs.is_valid() && rhs.is_valid());
   return Vector3D{lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z};
 }
 
-Vector3D operator*(const Vector3D& v, double scalar) noexcept {
+Vector3D operator*(const Vector3D& v, double scalar) {
   assert(v.is_valid());
   return Vector3D{v.x * scalar, v.y * scalar, v.z * scalar};
 }
 
-Vector3D operator*(double scalar, const Vector3D& v) noexcept {
+Vector3D operator*(double scalar, const Vector3D& v) {
   assert(v.is_valid());
   return Vector3D{v.x * scalar, v.y * scalar, v.z * scalar};
 }
 
-Vector3D operator/(const Vector3D& v, double scalar) noexcept {
+Vector3D operator/(const Vector3D& v, double scalar) {
   assert(v.is_valid() && !math::is_zero(scalar));
   return v * (1 / scalar);
 }
 
-Vector3D operator/(double scalar, const Vector3D& v) noexcept {
+Vector3D operator/(double scalar, const Vector3D& v) {
   assert(v.is_valid() && !math::is_zero(scalar));
   return v * (1 / scalar);
 }

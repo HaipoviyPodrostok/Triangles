@@ -1,5 +1,4 @@
 #pragma once
-#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cassert>
@@ -7,7 +6,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -16,38 +14,33 @@
 #include "AABB.hpp"
 #include "geometry/geometry.hpp"
 #include "math/math.hpp"
+#include "utils/logger.hpp"
 
 namespace acceleration {
 
 inline constexpr size_t max_leaf_cap_for_cpu = 4;
-inline constexpr size_t tree_max_depth = 64;
-inline constexpr size_t morton_code_size = 32;  // bits
-inline constexpr size_t grid_resolution = 1024;
+inline constexpr size_t tree_max_depth       = 64;
+inline constexpr size_t morton_code_size     = 32;  // bits
+inline constexpr size_t grid_resolution      = 1024;
 
 #ifdef USE_OPENCL
 inline const std::string opencl_file = "source/acceleration/kernels/lbvh.cl";
 #endif  // USE_OPENCL
 
-#ifdef NDEBUG
-inline const std::string default_dump_folder = "./dumps";
-inline const std::string counter_file_name = "./dumps/counter_file.txt";
-#endif
-
 struct BVHNode {
   AABB box;
 
-  int32_t left_idx = -1;
+  int32_t left_idx  = -1;
   int32_t right_idx = -1;
 
-  size_t start = 0;
-
+  size_t start  = 0;
   size_t n_objs = 0;
 
   BVHNode(const AABB& box_ = AABB(), const size_t first_ = 0,
           const size_t n_objs_ = 0);
 
-  [[nodiscard]] bool is_leaf() const noexcept { return (n_objs > 0); }
-  [[nodiscard]] bool is_valid() const noexcept;
+  [[nodiscard]] bool is_leaf() const { return (n_objs > 0); }
+  [[nodiscard]] bool is_valid() const;
 
   void init_leaf(const AABB& box_, const size_t start_, const size_t n_objs_);
   void init_internal(const AABB& box_, const int left_idx_,
@@ -62,32 +55,35 @@ class BVHTree {
   size_t max_depth_reached;
 
   void build();
-
   void dump_to_dot(const std::string& filename) const;
   void dump_node_dot(std::ostream& out, size_t idx) const;
 
+  [[nodiscard]] std::vector<std::pair<size_t, size_t>> get_intersections()
+      const;
+  [[nodiscard]] bool validate_tree() const;
+
  private:
-  std::vector<BVHNode> nodes;
-  std::vector<ObjT>& input;
+  std::vector<BVHNode>  nodes;
+  std::vector<ObjT>&    input;
   std::vector<uint32_t> morton_codes;
 
-  [[nodiscard]] std::vector<geometry::Vector3D> find_centroids();
+  [[nodiscard]] std::vector<geometry::Vector3D> find_centroids() const;
 
-  void build_cpu();
-
-  [[nodiscard]] AABB compute_box(const size_t start, const size_t n_objs);
-
+  [[nodiscard]] AABB compute_box(const size_t start, const size_t n_objs) const;
   [[nodiscard]] size_t partition_by_median(const size_t start,
                                            const size_t n_objs);
+  [[nodiscard]] bool   validate_node_rec(const size_t       node_idx,
+                                         size_t&            total_leaf_objects,
+                                         std::vector<bool>& visited) const;
 
-  void sort_input_cpu(const size_t start, const size_t n_objs,
-                      const math::Axis wildest_axis, const size_t mid_idx);
-
+  void   build_cpu();
+  void   sort_input_cpu(const size_t start, const size_t n_objs,
+                        const math::Axis wildest_axis, const size_t mid_idx);
   size_t build_node_rec_cpu(const size_t start, const size_t n_objs,
                             const size_t depth);
 
 #ifdef USE_OPENCL
-  [[nodiscard]] bool build_gpu();
+  void build_gpu();
 
   [[nodiscard]] AABB compute_global_box(
       const std::vector<geometry::Vector3D> centroids);
@@ -99,15 +95,24 @@ class BVHTree {
 template <typename ObjT>
 void BVHTree<ObjT>::build() {
   nodes.clear();
+
 #ifdef USE_OPENCL
-  bool gpu_succes = build_gpu();
-  if (gpu_succes) { return; }
+  try {
+    build_gpu();
+    LOG_INFO("GPU build sccessful");
+    return;
+  } catch (const std::exception& e) {
+    LOG_WARN("GPU build failed ({}). Falling back to CPU.", e.what());
+    nodes.clear();
+  }
 #endif  // USE_OPENCL
+
   build_cpu();
 }
 
 template <typename ObjT>
-[[nodiscard]] std::vector<geometry::Vector3D> BVHTree<ObjT>::find_centroids() {
+[[nodiscard]] std::vector<geometry::Vector3D> BVHTree<ObjT>::find_centroids()
+    const {
   std::vector<geometry::Vector3D> centroids;
 
   for (size_t i = 0; i < input.size(); ++i) {
@@ -115,9 +120,6 @@ template <typename ObjT>
     const geometry::Vector3D centroid = input[i].get_centre();
     centroids.emplace_back(centroid);
   }
-
-  // spdlog::info("find centroid succes");
-  // spdlog::info("centroids_size = {}", centroids.size());
   return centroids;
 }
 
@@ -130,14 +132,14 @@ struct SplitInfo {
   std::vector<int32_t> n_objs;
 };
 
-[[nodiscard]] std::optional<SplitInfo> get_split_info(
+[[nodiscard]] SplitInfo get_split_info(
     const std::vector<uint32_t>& morton_codes);
 
 void fill_node_idx(std::vector<BVHNode>& nodes, const SplitInfo& split_info);
 
 [[nodiscard]] std::vector<uint32_t> get_morton_code(
     const std::vector<geometry::Vector3D>& centroids,
-    const acceleration::AABB& box);
+    const acceleration::AABB&              box) noexcept;
 
 }  // namespace detail
 
@@ -157,18 +159,6 @@ AABB BVHTree<ObjT>::compute_global_box(
       if (centroid[j] > max[j]) { max[j] = centroid[j]; }
     }
   }
-
-  spdlog::info("global_box_computed");
-  // double min_x = min.x;
-  // double min_y = min.y;
-  // double min_z = min.z;
-
-  // double max_x = max.x;
-  // double max_y = max.y;
-  // double max_z = max.z;
-
-  // spdlog::info("{}, {}, {}, {}, {}, {}", min_x, min_y, min_z, max_x, max_y,
-  //              max_z);
   return {min, max};
 }
 
@@ -188,6 +178,7 @@ void BVHTree<ObjT>::sort_input_gpu() {
 
   std::vector<ObjT> sorted_input;
   sorted_input.reserve(num_obj);
+
   std::vector<uint32_t> sorted_codes;
   sorted_codes.reserve(num_obj);
 
@@ -199,7 +190,7 @@ void BVHTree<ObjT>::sort_input_gpu() {
   }
 
   morton_codes = std::move(sorted_codes);
-  input = std::move(sorted_input);
+  input        = std::move(sorted_input);
 }
 
 template <typename ObjT>
@@ -207,11 +198,11 @@ void BVHTree<ObjT>::compute_boxes(const size_t node_idx,
                                   const size_t n_internals) {
   if (node_idx >= n_internals) {
     const size_t obj_idx = nodes[node_idx].start;
-    nodes[node_idx].box = AABB{input[obj_idx]};
+    nodes[node_idx].box  = AABB{input[obj_idx]};
     return;
   }
 
-  const size_t left_idx = nodes[node_idx].left_idx;
+  const size_t left_idx  = nodes[node_idx].left_idx;
   const size_t right_idx = nodes[node_idx].right_idx;
 
   compute_boxes(left_idx, n_internals);
@@ -221,21 +212,17 @@ void BVHTree<ObjT>::compute_boxes(const size_t node_idx,
 }
 
 template <typename ObjT>
-bool BVHTree<ObjT>::build_gpu() {
+void BVHTree<ObjT>::build_gpu() {
   const std::vector<geometry::Vector3D> centroids = find_centroids();
   const AABB global_box = compute_global_box(centroids);
+
   this->morton_codes = detail::get_morton_code(centroids, global_box);
   this->sort_input_gpu();
 
-  std::optional<detail::SplitInfo> split_info =
-      detail::get_split_info(this->morton_codes);
-  if (split_info.has_value()) {
-    // spdlog::info("split info has value");
-    detail::fill_node_idx(nodes, split_info.value());
-    compute_boxes(0, split_info.value().splits.size());
-    return true;
-  }
-  return false;
+  detail::SplitInfo split_info = detail::get_split_info(this->morton_codes);
+
+  detail::fill_node_idx(nodes, split_info);
+  compute_boxes(0, split_info.splits.size());
 }
 
 #endif  // USE_OPENCL
@@ -246,7 +233,7 @@ void BVHTree<ObjT>::build_cpu() {
 }
 
 template <typename ObjT>
-AABB BVHTree<ObjT>::compute_box(const size_t start, const size_t n_objs) {
+AABB BVHTree<ObjT>::compute_box(const size_t start, const size_t n_objs) const {
   if (n_objs == 0) { return AABB(); }
 
   AABB box{input[start]};
@@ -281,11 +268,12 @@ size_t BVHTree<ObjT>::partition_by_median(const size_t start,
 template <typename ObjT>
 void BVHTree<ObjT>::sort_input_cpu(const size_t start, const size_t n_objs,
                                    const math::Axis wildest_axis,
-                                   const size_t mid_idx) {
+                                   const size_t     mid_idx) {
   using InputIt = std::vector<ObjT>::iterator;
+
   InputIt begin = input.begin() + start;
-  InputIt mid = input.begin() + mid_idx;
-  InputIt end = input.begin() + start + n_objs;
+  InputIt mid   = input.begin() + mid_idx;
+  InputIt end   = input.begin() + start + n_objs;
 
   switch (wildest_axis) {
     case math::Axis::X: {
@@ -328,16 +316,101 @@ size_t BVHTree<ObjT>::build_node_rec_cpu(const size_t start,
 
   const int mid_idx = partition_by_median(start, n_objs);
 
-  const size_t left_n_objs = mid_idx - start;
+  const size_t left_n_objs  = mid_idx - start;
   const size_t right_n_objs = n_objs - left_n_objs;
 
-  const int left_idx = build_node_rec_cpu(start, left_n_objs, depth + 1);
+  const int left_idx  = build_node_rec_cpu(start, left_n_objs, depth + 1);
   const int right_idx = build_node_rec_cpu(mid_idx, right_n_objs, depth + 1);
 
   nodes[node_idx].init_internal(
       merge(nodes[left_idx].box, nodes[right_idx].box), left_idx, right_idx);
 
   return node_idx;
+}
+
+template <typename ObjT>
+bool BVHTree<ObjT>::validate_tree() const {
+  if (nodes.empty()) return input.empty();
+  const size_t root_idx           = 0;
+  size_t       leaf_objects_count = 0;
+
+  std::vector<bool> visited(nodes.size(), false);
+
+  bool is_valid = validate_node_rec(root_idx, leaf_objects_count, visited);
+
+  if (leaf_objects_count != input.size()) {
+    LOG_ERR("Validation failed: Tree holds {}, but input has {}.",
+            leaf_objects_count, input.size());
+    return false;
+  }
+
+  return is_valid;
+}
+
+template <typename ObjT>
+bool BVHTree<ObjT>::validate_node_rec(const size_t       node_idx,
+                                      size_t&            total_leaf_objects,
+                                      std::vector<bool>& visited) const {
+  if (node_idx >= nodes.size()) {
+    LOG_ERR("Validation failed: Index out of bounds.");
+    return false;
+  }
+
+  if (visited[node_idx]) {
+    LOG_ERR(
+        "Validation failed: Cycle detected: Node {} points back to an already "
+        "visited node.",
+        node_idx);
+    return false;
+  }
+  visited[node_idx] = true;
+
+  const BVHNode& node = nodes[node_idx];
+
+  if (!node.box.is_valid()) {
+    LOG_ERR("Validation failed: Node {} gets invalid AABB.", node_idx);
+    return false;
+  }
+  if (node.is_leaf()) {
+    total_leaf_objects += node.n_objs;
+    // node.box ==
+    // compute_box(node.start, node.n_objs);
+    return true;
+  }
+
+  if (node.left_idx == node_idx || node.right_idx == node_idx ||
+      node.left_idx < 0 || node.right_idx < 0 ||
+      node.left_idx >= nodes.size() || node.right_idx >= nodes.size()) {
+    LOG_ERR(
+        "Validation failed: Node {} has corrupted children indices ({}, {}).",
+        node_idx, node.left_idx, node.right_idx);
+    return false;
+  }
+
+  const BVHNode& left  = nodes[node.left_idx];
+  const BVHNode& right = nodes[node.right_idx];
+
+  AABB merged = merge(left.box, right.box);
+
+  if (!node.box.is_contains(merged)) {
+    LOG_ERR(
+        "Validation failed: Node {}: AABB does not fully contain its children",
+        node_idx);
+    return false;
+  }
+
+  bool left_valid =
+      validate_node_rec(node.left_idx, total_leaf_objects, visited);
+  bool right_valid =
+      validate_node_rec(node.right_idx, total_leaf_objects, visited);
+
+  return left_valid && right_valid;
+}
+
+template <typename ObjT>
+std::vector<std::pair<size_t, size_t>> BVHTree<ObjT>::get_intersections()
+    const {
+  std::vector<std::pair<size_t, size_t>> result;
 }
 
 template <typename ObjT>
@@ -355,14 +428,12 @@ template <typename ObjT>
 void BVHTree<ObjT>::dump_node_dot(std::ostream& out, size_t idx) const {
   const auto& node = nodes[idx];
 
-  // Создаем подпись для узла (ID, тип, границы)
   out << "  node" << idx << " [label=\"{ID: " << idx;
   if (node.is_leaf()) {
     out << " | LEAF | n_objs: " << node.n_objs << "}\"];\n";
   } else {
     out << " | INTERNAL}\"];\n";
 
-    // Рекурсивно рисуем связи к детям
     out << "  node" << idx << " -> node" << node.left_idx << ";\n";
     out << "  node" << idx << " -> node" << node.right_idx << ";\n";
 

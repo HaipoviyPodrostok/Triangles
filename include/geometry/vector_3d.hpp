@@ -30,11 +30,11 @@ struct Vector3D {
   void print() const;
 };
 
-Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs) noexcept;
-Vector3D operator-(const Vector3D& lhs, const Vector3D& rhs) noexcept;
-Vector3D operator*(const Vector3D& v, double scalar) noexcept;
-Vector3D operator*(double scalar, const Vector3D& v) noexcept;
-Vector3D operator/(const Vector3D& v, double scalar) noexcept;
-Vector3D operator/(double scalar, const Vector3D& v) noexcept;
+Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs);
+Vector3D operator-(const Vector3D& lhs, const Vector3D& rhs);
+Vector3D operator*(const Vector3D& v, double scalar);
+Vector3D operator*(double scalar, const Vector3D& v);
+Vector3D operator/(const Vector3D& v, double scalar);
+Vector3D operator/(double scalar, const Vector3D& v);
 
 }  // namespace geometry

@@ -45,9 +45,16 @@ if(TRIANGLES_STANDALONE)
     endif()
 
     if(ENABLE_LOGS)
-        find_package(spdlog REQUIRED)
-        target_link_libraries(triangles_lib PRIVATE spdlog::spdlog)
-        target_compile_definitions(triangles_lib PRIVATE ENABLE_LOGGING)
+        include(FetchContent)
+        FetchContent_Declare(
+            spdlog
+            GIT_REPOSITORY https://github.com/gabime/spdlog.git
+            GIT_TAG v1.12.0
+        )
+        FetchContent_MakeAvailable(spdlog)
+
+        target_link_libraries(triangles_lib PUBLIC spdlog::spdlog)
+        target_compile_definitions(triangles_lib PUBLIC ENABLE_LOGGING)
     endif()
 endif()
 

@@ -66,6 +66,12 @@ int main(int argc, char* argv[]) {
 
   tree.dump_to_dot("tree.dot");
 
+  if (tree.validate_tree()) {
+    std::cout << "valid" << std::endl;
+  } else {
+    std::cout << "non valid" << std::endl;
+  }
+
   std::cout << "finished" << std::endl;
   spdlog::info("Program finished");
 
