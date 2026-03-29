@@ -11,7 +11,7 @@ else()
 endif()
 
 option(USE_OPENCL "Enable OpenCL GPU acceleration" ON)
-option(ENABLE_LOGS "Enable spdlog logging" ON)
+option(ENABLE_LOGS "Enable spdlog logging" OFF)
 
 if(USE_OPENCL)
     find_package(OpenCL REQUIRED)
@@ -69,14 +69,17 @@ if(TRIANGLES_STANDALONE)
         add_subdirectory(tests/unit)
 
         find_package(Python3 COMPONENTS Interpreter REQUIRED)
-        add_test(NAME end2end
-                 COMMAND ${Python3_EXECUTABLE}
-                         ${CMAKE_SOURCE_DIR}/tests/end2end/run.py
-                         -b $<TARGET_FILE:triangles.x>
-        )
-        set_tests_properties(end2end PROPERTIES LABELS "e2e"
-                             TEST_PREFIX "e2e:"
-        )
+        file(GLOB E2E_TEST_FILES "${CMAKE_SOURCE_DIR}/tests/end2end/tests/*.txt")
+        foreach(TEST_FILE ${E2E_TEST_FILES})
+            get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+            add_test(NAME e2e:${TEST_NAME}
+                     COMMAND ${Python3_EXECUTABLE}
+                             ${CMAKE_SOURCE_DIR}/tests/end2end/run.py
+                             -b $<TARGET_FILE:triangles.x>
+                             -m ${TEST_NAME}
+            )
+            set_tests_properties(e2e:${TEST_NAME} PROPERTIES LABELS "e2e")
+        endforeach()
     endif()
 endif()
 

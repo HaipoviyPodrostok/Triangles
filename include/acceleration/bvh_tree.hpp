@@ -231,6 +231,7 @@ void BVHTree<ObjT>::build_gpu() {
 
 template <typename ObjT>
 void BVHTree<ObjT>::build_cpu() {
+  if (input.empty()) return;
   build_node_rec_cpu(0, input.size(), 1);
 }
 

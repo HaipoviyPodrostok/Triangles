@@ -30,8 +30,7 @@ bool BVHNode::is_valid() const {
 }
 
 void BVHNode::init_leaf(
-    const AABB& box_, const size_t start_, const size_t n_objs_
-) {
+    const AABB& box_, const size_t start_, const size_t n_objs_) {
   box       = box_;
   start     = start_;
   n_objs    = n_objs_;
@@ -40,8 +39,7 @@ void BVHNode::init_leaf(
 }
 
 void BVHNode::init_internal(
-    const AABB& box_, const int left_idx_, const int right_idx_
-) {
+    const AABB& box_, const int left_idx_, const int right_idx_) {
   box       = box_;
   start     = 0;
   n_objs    = 0;

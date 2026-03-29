@@ -9,7 +9,7 @@
 #include <CL/opencl.h>
 #endif  // USE_OPENCL
 
-#include <spdlog/spdlog.h>
+#include "utils/logger.hpp"
 
 namespace acceleration {
 
@@ -227,7 +227,7 @@ detail::SplitInfo detail::get_split_info(
 
   const detail::SplitInfo split_info = run_find_splits(cl, morton_codes);
 
-  spdlog::info("get_split_info successful)");
+  LOG_INFO("get_split_info successful)");
   return split_info;
 }
 
@@ -238,7 +238,7 @@ void detail::fill_node_idx(
 
   nodes.resize(n_internals + n_leafs);
 
-  spdlog::info("resize succes");
+  LOG_INFO("resize succes");
 
   for (size_t i = 0; i < n_internals; ++i) {
     int32_t left_idx  = -1;
@@ -273,7 +273,7 @@ void detail::fill_node_idx(
     nodes[n_internals + i].right_idx = -1;
   }
 
-  spdlog::info("fill_node succes");
+  LOG_INFO("fill_node succes");
 }
 
 #endif  // USE_OPENCL

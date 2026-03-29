@@ -14,6 +14,7 @@ add_executable(geometry_test.x
     triangle_test.cpp
     plane_test.cpp
     section_test.cpp
+    bvh_tree_test.cpp
 )
 
 target_include_directories(geometry_test.x
