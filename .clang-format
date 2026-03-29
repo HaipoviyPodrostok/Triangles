@@ -13,7 +13,7 @@ AllowShortBlocksOnASingleLine: Always
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 
 # 1. Выравнивание аргументов под скобкой
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: DontAlign
 
 # 2. Выравнивание макросов #define
 AlignConsecutiveMacros: true
@@ -21,13 +21,28 @@ AlignConsecutiveMacros: true
 # 3. Автоматические комментарии в конце namespace
 FixNamespaceComments: true
 
-# 4. То самое выравнивание знаков '=' (из твоего прошлого вопроса)
-AlignConsecutiveAssignments: true
-
-# 5. Выравнивание объявлений переменных (типы и имена в колонку)
-AlignConsecutiveDeclarations: true
 
 # 6. Выравнивание инициализации в конструкторах (через двоеточие)
 PackConstructorInitializers: NextLine
 
 AlignTrailingComments: true
+
+AlignOperands: Align
+AlignArrayOfStructures: Left
+
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+
+AlignEscapedNewlines: Right
+
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+  
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true

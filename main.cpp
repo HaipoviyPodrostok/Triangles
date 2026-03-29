@@ -73,6 +73,12 @@ int main(int argc, char* argv[]) {
   }
 
   std::cout << "finished" << std::endl;
+
+  std::vector<bool> output = tree.get_intersections();
+  for (size_t i = 0; i < output.size(); ++i) {
+    if (output[i]) { std::cout << i << std::endl; }
+  }
+
   spdlog::info("Program finished");
 
   return 0;

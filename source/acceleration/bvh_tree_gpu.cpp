@@ -70,6 +70,29 @@ struct CLContext {
   cl_device_id     device  = nullptr;
 
   bool valid = false;
+
+  CLContext() = default;
+
+  CLContext(const CLContext&)            = delete;
+  CLContext& operator=(const CLContext&) = delete;
+
+  CLContext(CLContext&& other) noexcept
+      : context(other.context),
+        queue(other.queue),
+        program(other.program),
+        device(other.device),
+        valid(other.valid) {
+    other.context = nullptr;
+    other.queue   = nullptr;
+    other.program = nullptr;
+  }
+  CLContext& operator=(CLContext&& other) noexcept = delete;
+
+  ~CLContext() {
+    if (program) clReleaseProgram(program);
+    if (queue) clReleaseCommandQueue(queue);
+    if (context) clReleaseContext(context);
+  }
 };
 
 struct CLMem {
@@ -102,8 +125,8 @@ CLContext init_opencl() {
         acceleration::opencl_file);
   }
 
-  std::string source_code((std::istreambuf_iterator<char>(file)),
-                          std::istreambuf_iterator<char>());
+  std::string source_code(
+      (std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
   const char*  source_str  = source_code.c_str();
   const size_t source_size = source_code.length();
@@ -120,14 +143,8 @@ CLContext init_opencl() {
   return cl;
 }
 
-void cleanup_opencl(CLContext& cl) {
-  if (cl.program) { clReleaseProgram(cl.program); }
-  if (cl.queue) { clReleaseCommandQueue(cl.queue); }
-  if (cl.context) { clReleaseContext(cl.context); }
-}
-
-detail::SplitInfo run_find_splits(const CLContext&             cl,
-                                  const std::vector<uint32_t>& morton_codes) {
+detail::SplitInfo run_find_splits(
+    const CLContext& cl, const std::vector<uint32_t>& morton_codes) {
   cl_int       err;
   const size_t num_objects = morton_codes.size();
 
@@ -138,7 +155,7 @@ detail::SplitInfo run_find_splits(const CLContext&             cl,
 
   CLMem morton_codes_buf =
       clCreateBuffer(cl.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes,
-                     const_cast<uint32_t*>(morton_codes.data()), &err);
+          const_cast<uint32_t*>(morton_codes.data()), &err);
   if (err != CL_SUCCESS) {
     throw std::runtime_error("Failure to build a tree on the GPU");
   }
@@ -172,8 +189,8 @@ detail::SplitInfo run_find_splits(const CLContext&             cl,
   clSetKernelArg(kernel, 4, sizeof(int32_t), &num_obj_int);
 
   size_t num_nodes = num_objects - 1;
-  clEnqueueNDRangeKernel(cl.queue, kernel, 1, NULL, &num_nodes, NULL, 0, NULL,
-                         NULL);
+  clEnqueueNDRangeKernel(
+      cl.queue, kernel, 1, NULL, &num_nodes, NULL, 0, NULL, NULL);
   ;
 
   const size_t bytes_out = num_nodes * sizeof(uint32_t);
@@ -183,20 +200,20 @@ detail::SplitInfo run_find_splits(const CLContext&             cl,
   std::vector<int32_t> n_objs(num_nodes);
 
   err = clEnqueueReadBuffer(cl.queue, splits_buf.handle, CL_TRUE, 0, bytes_out,
-                            out_splits.data(), 0, NULL, NULL);
-  if (err != CL_SUCCESS)
+      out_splits.data(), 0, NULL, NULL);
+  if (err != CL_SUCCESS) {
     throw std::runtime_error("OpenCL: Error copying splits back");
-
+  }
   err = clEnqueueReadBuffer(cl.queue, starts_buf.handle, CL_TRUE, 0, bytes_out,
-                            starts.data(), 0, NULL, NULL);
-  if (err != CL_SUCCESS)
+      starts.data(), 0, NULL, NULL);
+  if (err != CL_SUCCESS) {
     throw std::runtime_error("OpenCL: Error copying splits back");
-
+  }
   err = clEnqueueReadBuffer(cl.queue, n_objs_buf.handle, CL_TRUE, 0, bytes_out,
-                            n_objs.data(), 0, NULL, NULL);
-  if (err != CL_SUCCESS)
+      n_objs.data(), 0, NULL, NULL);
+  if (err != CL_SUCCESS) {
     throw std::runtime_error("OpenCL: Error copying splits back");
-
+  }
   clReleaseKernel(kernel);
 
   return detail::SplitInfo{out_splits, starts, n_objs};
@@ -209,14 +226,13 @@ detail::SplitInfo detail::get_split_info(
   CLContext cl = init_opencl();
 
   const detail::SplitInfo split_info = run_find_splits(cl, morton_codes);
-  cleanup_opencl(cl);
 
   spdlog::info("get_split_info successful)");
   return split_info;
 }
 
-void detail::fill_node_idx(std::vector<BVHNode>&    nodes,
-                           const detail::SplitInfo& split_info) {
+void detail::fill_node_idx(
+    std::vector<BVHNode>& nodes, const detail::SplitInfo& split_info) {
   const size_t n_internals = split_info.splits.size();
   const size_t n_leafs     = n_internals + 1;
 
