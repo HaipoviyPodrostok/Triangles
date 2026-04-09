@@ -22,12 +22,10 @@ struct Vector3D {
   [[nodiscard]] double length() const;
   [[nodiscard]] double scalar(const Vector3D& other) const;
 
-  double& operator[](size_t idx);
+  double&       operator[](size_t idx);
   const double& operator[](size_t idx) const;
 
   [[nodiscard]] Vector3D cross(const Vector3D& other) const;
-
-  void print() const;
 };
 
 Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs);

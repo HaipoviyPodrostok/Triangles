@@ -63,13 +63,13 @@ bool Section::is_intersect(const Section& other) const {
     if (a1 > b1) { std::swap(a1, b1); }
     if (a2 > b2) { std::swap(a2, b2); }
 
-    const double left_max = std::max(a1, a2);
+    const double left_max  = std::max(a1, a2);
     const double right_min = std::min(b1, b2);
 
     const double len1 = b1 - a1;
     const double len2 = b2 - a2;
 
-    const double scale = std::max(std::fabs(len1), std::fabs(len2));
+    const double scale     = std::max(std::fabs(len1), std::fabs(len2));
     const double scale_eps = math::get_eps(scale);
 
     return right_min + scale_eps >= left_max;
@@ -107,8 +107,7 @@ bool Section::is_belong(const Line& line) const {
   return line.is_contains(a) && line.is_contains(b);
 }
 
-std::optional<Vector3D> Section::intersect_point(
-    const Line& line) const {
+std::optional<Vector3D> Section::intersect_point(const Line& line) const {
   assert(this->is_valid());
   assert(line.is_valid());
 
@@ -135,7 +134,7 @@ bool Section::is_contains(const Vector3D& p) const {
 
   if ((ap).is_collinear(ab)) {
     double scalar_ap_bp = ap.scalar(bp);
-    double scale = ab.length() * ab.length();
+    double scale        = ab.length() * ab.length();
     return (scalar_ap_bp < 0 || math::is_zero(scalar_ap_bp, scale));
   }
 

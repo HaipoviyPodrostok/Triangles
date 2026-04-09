@@ -106,7 +106,4 @@ Vector3D Vector3D::cross(const Vector3D& other) const {
   return Vector3D{i, j, k};
 }
 
-void Vector3D::print() const {
-  std::cout << "(" << x << ", " << y << ", " << z << ")";
-}
 }  // namespace geometry
